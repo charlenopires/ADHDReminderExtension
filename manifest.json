@@ -1,0 +1,23 @@
+{
+    "manifest_version": 3,
+    "name": "Reminder Extension for ADHD People",
+    "version": "1.0",
+    "description": "Helps ADHD people to remember important things by displaying them on new tabs",
+    "permissions": ["storage"],
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "icons/reminder-icon16.png",
+        "48": "icons/reminder-icon48.png",
+        "128": "icons/reminder-icon128.png"
+      }
+    },
+    "icons": {
+      "16": "icons/reminder-icon16.png",
+      "48": "icons/reminder-icon48.png",
+      "128": "icons/reminder-icon128.png"
+    },
+    "chrome_url_overrides": {
+      "newtab": "newtab.html"
+    }
+  }
