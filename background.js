@@ -63,6 +63,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     case 'TASKS_UPDATED':
       // Broadcast task updates to all tabs
+      console.log('Broadcasting task updates to all tabs');
       broadcastToAllTabs(message);
       sendResponse({ success: true });
       break;
@@ -103,10 +104,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Broadcast message to all tabs
 function broadcastToAllTabs(message) {
   chrome.tabs.query({}, (tabs) => {
+    console.log(`Broadcasting to ${tabs.length} tabs`);
     tabs.forEach(tab => {
-      chrome.tabs.sendMessage(tab.id, message).catch(() => {
-        // Ignore errors for tabs that don't have listeners
-      });
+      // Focus on new tab pages
+      if (tab.url && (tab.url.includes('chrome://newtab/') || tab.url.includes('newtab.html'))) {
+        console.log('Sending message to new tab:', tab.id);
+        chrome.tabs.sendMessage(tab.id, message).catch((error) => {
+          console.log('Error sending message to tab:', tab.id, error);
+        });
+      }
     });
   });
 }

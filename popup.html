@@ -78,7 +78,7 @@
       margin-bottom: 15px;
     }
 
-    input[type="text"], textarea {
+    input[type="text"], input[type="time"], textarea {
       width: 100%;
       background: #1a1a1a;
       border: 1px solid #333;
@@ -90,10 +90,17 @@
       transition: all 0.3s ease;
     }
 
-    input[type="text"]:focus, textarea:focus {
+    input[type="text"]:focus, input[type="time"]:focus, textarea:focus {
       outline: none;
       border-color: #4ecdc4;
       box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.1);
+    }
+
+    input[type="time"] {
+      width: 90px;
+      padding: 8px;
+      font-size: 12px;
+      color-scheme: dark;
     }
 
     textarea {
@@ -108,8 +115,12 @@
       margin-bottom: 8px;
     }
 
-    .task-input input {
+    .task-input input[type="text"] {
       flex: 1;
+      margin-bottom: 0;
+    }
+
+    .task-input input[type="time"] {
       margin-bottom: 0;
     }
 
@@ -140,9 +151,70 @@
       padding: 8px 12px;
       margin-bottom: 6px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
       font-size: 13px;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .task-item.completed {
+      opacity: 0.6;
+      background: #111;
+    }
+
+    .task-item.completed .task-content {
+      text-decoration: line-through;
+      color: #666;
+    }
+
+    .task-checkbox {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      border: 1px solid #555;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .task-checkbox:checked {
+      background: #4ecdc4;
+      border-color: #4ecdc4;
+    }
+
+    .task-checkbox:checked::after {
+      content: '✓';
+      position: absolute;
+      top: -2px;
+      left: 2px;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .task-time {
+      font-size: 11px;
+      color: #888;
+      font-weight: 500;
+      min-width: 40px;
+      flex-shrink: 0;
+    }
+
+    .task-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task-text {
+      flex: 1;
+    }
+
+    .task-overdue {
+      color: #ff6b6b;
+      font-weight: 500;
     }
 
     .remove-task {
@@ -233,6 +305,7 @@
       </div>
       <div class="day-label" id="today-date"></div>
       <div class="task-input">
+        <input type="time" id="today-time-input" value="09:00">
         <input type="text" id="today-task-input" placeholder="Add task for today...">
         <button class="add-task-btn" onclick="addTask('today')">+</button>
       </div>
@@ -247,6 +320,7 @@
       </div>
       <div class="day-label" id="tomorrow-date"></div>
       <div class="task-input">
+        <input type="time" id="tomorrow-time-input" value="09:00">
         <input type="text" id="tomorrow-task-input" placeholder="Add task...">
         <button class="add-task-btn" onclick="addTask('tomorrow')">+</button>
       </div>
@@ -261,6 +335,7 @@
       </div>
       <div class="day-label" id="after-tomorrow-date"></div>
       <div class="task-input">
+        <input type="time" id="after-tomorrow-time-input" value="09:00">
         <input type="text" id="after-tomorrow-task-input" placeholder="Add task...">
         <button class="add-task-btn" onclick="addTask('afterTomorrow')">+</button>
       </div>

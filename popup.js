@@ -75,7 +75,7 @@ function setupEventListeners() {
       await window.taskDB.saveProject(projectName);
       tasksData.currentProject = projectName;
       // Notify other tabs about project change
-      notifyTabsOfChange();
+      await notifyTabsOfChange();
     } catch (error) {
       console.error('Error saving project:', error);
     }
@@ -98,14 +98,23 @@ function debounce(func, wait) {
 // Load saved data from IndexedDB
 async function loadData() {
   try {
+    console.log('Loading data from IndexedDB...');
+    
     // Load current project
     const currentProject = await window.taskDB.getCurrentProject();
-    document.getElementById('current-project').value = currentProject;
-    tasksData.currentProject = currentProject;
+    document.getElementById('current-project').value = currentProject || '';
+    tasksData.currentProject = currentProject || '';
     
     // Load all tasks
     const allTasks = await window.taskDB.getAllTasks();
-    tasksData = { ...tasksData, ...allTasks };
+    console.log('Loaded tasks from IndexedDB:', allTasks);
+    
+    // Ensure arrays exist
+    tasksData.today = allTasks.today || [];
+    tasksData.tomorrow = allTasks.tomorrow || [];
+    tasksData.afterTomorrow = allTasks.afterTomorrow || [];
+    
+    console.log('Final tasksData:', tasksData);
     
     // Render tasks
     renderTasks('today');
@@ -113,6 +122,10 @@ async function loadData() {
     renderTasks('afterTomorrow');
   } catch (error) {
     console.error('Error loading data:', error);
+    // Initialize empty arrays
+    tasksData.today = [];
+    tasksData.tomorrow = [];
+    tasksData.afterTomorrow = [];
     // Fallback to Chrome storage
     loadDataFromChromeStorage();
   }
@@ -137,36 +150,61 @@ function loadDataFromChromeStorage() {
 
 // Add task
 async function addTask(day) {
-  const inputId = day === 'afterTomorrow' ? 'after-tomorrow-task-input' : `${day}-task-input`;
-  const input = document.getElementById(inputId);
-  const taskText = input.value.trim();
+  const timeInputId = day === 'afterTomorrow' ? 'after-tomorrow-time-input' : `${day}-time-input`;
+  const taskInputId = day === 'afterTomorrow' ? 'after-tomorrow-task-input' : `${day}-task-input`;
   
-  if (taskText) {
+  const timeInput = document.getElementById(timeInputId);
+  const taskInput = document.getElementById(taskInputId);
+  
+  const time = timeInput.value;
+  const taskText = taskInput.value.trim();
+  
+  if (taskText && time) {
     try {
+      console.log('Adding task:', { day, taskText, time });
+      
       // Save to IndexedDB
-      const newTask = await window.taskDB.saveTask(day, taskText);
+      const savedTask = await window.taskDB.saveTaskWithTime(day, taskText, time);
+      console.log('Task saved to IndexedDB:', savedTask);
       
       // Update local state
-      tasksData[day].push(newTask);
+      if (!tasksData[day]) {
+        tasksData[day] = [];
+      }
+      tasksData[day].push(savedTask);
       
-      // Clear input and re-render
-      input.value = '';
+      // Sort tasks by time
+      sortTasksByTime(day);
+      
+      // Clear inputs and re-render
+      taskInput.value = '';
       renderTasks(day);
       
-      // Notify other tabs
-      notifyTabsOfChange();
+      // Notify other tabs with fresh data
+      await notifyTabsOfChange();
+      
+      console.log('Task added successfully and tabs notified');
     } catch (error) {
       console.error('Error adding task:', error);
-      // Fallback to local state only
-      const fallbackTask = {
-        id: Date.now(),
-        text: taskText,
-        completed: false,
-        created: new Date().toISOString()
-      };
-      tasksData[day].push(fallbackTask);
-      input.value = '';
-      renderTasks(day);
+      
+      // Show error to user
+      const saveBtn = document.getElementById('save-btn');
+      const originalText = saveBtn.textContent;
+      saveBtn.textContent = 'Error saving task';
+      saveBtn.style.background = 'linear-gradient(135deg, #ff4757, #ff3742)';
+      
+      setTimeout(() => {
+        saveBtn.textContent = originalText;
+        saveBtn.style.background = 'linear-gradient(135deg, #4ecdc4, #44a08d)';
+      }, 2000);
+    }
+  } else {
+    // Show validation message
+    if (!taskText) {
+      taskInput.style.borderColor = '#ff4757';
+      setTimeout(() => {
+        taskInput.style.borderColor = '#333';
+      }, 2000);
     }
   }
 }
@@ -193,6 +231,65 @@ async function removeTask(day, taskId) {
   }
 }
 
+// Sort tasks by time
+function sortTasksByTime(day) {
+  if (tasksData[day]) {
+    tasksData[day].sort((a, b) => {
+      const timeA = a.time || '00:00';
+      const timeB = b.time || '00:00';
+      return timeA.localeCompare(timeB);
+    });
+  }
+}
+
+// Check if task is overdue
+function isTaskOverdue(task, day) {
+  if (!task.time || task.completed) return false;
+  
+  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  let taskDate = new Date(today);
+  if (day === 'tomorrow') {
+    taskDate.setDate(taskDate.getDate() + 1);
+  } else if (day === 'afterTomorrow') {
+    taskDate.setDate(taskDate.getDate() + 2);
+  }
+  
+  const [hours, minutes] = task.time.split(':');
+  taskDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+  
+  return now > taskDate && day === 'today';
+}
+
+// Toggle task completion
+async function toggleTask(day, taskId) {
+  try {
+    const task = tasksData[day].find(t => t.id === taskId);
+    if (task) {
+      task.completed = !task.completed;
+      
+      // Update in IndexedDB
+      await window.taskDB.updateTask(taskId, { completed: task.completed });
+      
+      // Re-render
+      renderTasks(day);
+      
+      // Notify other tabs
+      notifyTabsOfChange();
+    }
+  } catch (error) {
+    console.error('Error toggling task:', error);
+    // Update local state anyway
+    const task = tasksData[day].find(t => t.id === taskId);
+    if (task) {
+      task.completed = !task.completed;
+      renderTasks(day);
+    }
+  }
+}
+
 // Render tasks
 function renderTasks(day) {
   const containerId = day === 'afterTomorrow' ? 'after-tomorrow-tasks' : `${day}-tasks`;
@@ -201,11 +298,23 @@ function renderTasks(day) {
   container.innerHTML = '';
   
   if (tasksData[day] && tasksData[day].length > 0) {
+    // Sort tasks by time before rendering
+    sortTasksByTime(day);
+    
     tasksData[day].forEach(task => {
       const taskElement = document.createElement('div');
-      taskElement.className = 'task-item';
+      const isOverdue = isTaskOverdue(task, day);
+      const completedClass = task.completed ? ' completed' : '';
+      const overdueClass = isOverdue ? ' task-overdue' : '';
+      
+      taskElement.className = `task-item${completedClass}`;
       taskElement.innerHTML = `
-        <span>${task.text}</span>
+        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} 
+               onchange="toggleTask('${day}', ${task.id})">
+        <div class="task-time${overdueClass}">${task.time || '--:--'}</div>
+        <div class="task-content">
+          <span class="task-text">${task.text}</span>
+        </div>
         <button class="remove-task" onclick="removeTask('${day}', ${task.id})">×</button>
       `;
       container.appendChild(taskElement);
@@ -259,12 +368,42 @@ async function saveData() {
 }
 
 // Notify other tabs of changes
-function notifyTabsOfChange() {
-  // Use Chrome messaging to notify new tab
-  chrome.runtime.sendMessage({
-    type: 'TASKS_UPDATED',
-    data: tasksData
-  }).catch(() => {
-    // Ignore errors if no listeners
-  });
+async function notifyTabsOfChange() {
+  try {
+    // Reload fresh data from IndexedDB before notifying
+    const currentProject = await window.taskDB.getCurrentProject();
+    const allTasks = await window.taskDB.getAllTasks();
+    
+    const freshData = {
+      currentProject: currentProject,
+      ...allTasks
+    };
+    
+    // Update local state
+    tasksData = freshData;
+    
+    // Use Chrome messaging to notify new tab
+    chrome.runtime.sendMessage({
+      type: 'TASKS_UPDATED',
+      data: freshData
+    }).catch(() => {
+      // Ignore errors if no listeners
+    });
+    
+    // Also try direct tab messaging
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach(tab => {
+        if (tab.url && (tab.url.includes('chrome://newtab/') || tab.url.includes('newtab.html'))) {
+          chrome.tabs.sendMessage(tab.id, {
+            type: 'TASKS_UPDATED',
+            data: freshData
+          }).catch(() => {
+            // Ignore errors for tabs that don't have listeners
+          });
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error notifying tabs of changes:', error);
+  }
 }

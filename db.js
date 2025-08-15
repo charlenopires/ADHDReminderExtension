@@ -121,6 +121,39 @@ class TaskDB {
     });
   }
 
+  // Save task with time
+  async saveTaskWithTime(day, text, time) {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(['tasks'], 'readwrite');
+      const store = transaction.objectStore('tasks');
+      
+      const task = {
+        day: day,
+        text: text,
+        time: time,
+        completed: false,
+        created: new Date().toISOString()
+      };
+
+      console.log('Saving task to IndexedDB:', task);
+
+      const request = store.add(task);
+
+      request.onsuccess = () => {
+        task.id = request.result;
+        console.log('Task with time saved successfully, ID:', task.id);
+        resolve(task);
+      };
+
+      request.onerror = () => {
+        console.error('Error saving task with time:', request.error);
+        reject(request.error);
+      };
+    });
+  }
+
   // Get tasks for a specific day
   async getTasksForDay(day) {
     if (!this.db) await this.init();
@@ -154,6 +187,8 @@ class TaskDB {
 
       request.onsuccess = () => {
         const tasks = request.result;
+        console.log('Retrieved all tasks from IndexedDB:', tasks);
+        
         const tasksByDay = {
           today: [],
           tomorrow: [],
@@ -166,16 +201,23 @@ class TaskDB {
           }
         });
 
-        // Sort tasks by creation date
+        // Sort tasks by time, then by creation date
         Object.keys(tasksByDay).forEach(day => {
-          tasksByDay[day].sort((a, b) => new Date(a.created) - new Date(b.created));
+          tasksByDay[day].sort((a, b) => {
+            const timeA = a.time || '00:00';
+            const timeB = b.time || '00:00';
+            const timeComparison = timeA.localeCompare(timeB);
+            if (timeComparison !== 0) return timeComparison;
+            return new Date(a.created) - new Date(b.created);
+          });
         });
 
+        console.log('Organized tasks by day:', tasksByDay);
         resolve(tasksByDay);
       };
 
       request.onerror = () => {
-        console.error('Error getting all tasks');
+        console.error('Error getting all tasks:', request.error);
         reject(request.error);
       };
     });
@@ -241,6 +283,85 @@ class TaskDB {
         console.error('Error getting task for update');
         reject(getRequest.error);
       };
+    });
+  }
+
+  // Move overdue tasks to next day
+  async moveOverdueTasks() {
+    if (!this.db) await this.init();
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const todayTasks = await this.getTasksForDay('today');
+        const now = new Date();
+        const movedTasks = [];
+
+        for (const task of todayTasks) {
+          if (!task.completed && task.time) {
+            const [hours, minutes] = task.time.split(':');
+            const taskTime = new Date();
+            taskTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+            // If task time has passed and it's not completed, move to tomorrow
+            if (now > taskTime) {
+              // Update task to tomorrow
+              await this.updateTask(task.id, { day: 'tomorrow' });
+              movedTasks.push(task);
+            }
+          }
+        }
+
+        console.log(`Moved ${movedTasks.length} overdue tasks to tomorrow`);
+        resolve(movedTasks);
+      } catch (error) {
+        console.error('Error moving overdue tasks:', error);
+        reject(error);
+      }
+    });
+  }
+
+  // Move all incomplete tasks to next day (end of day cleanup)
+  async moveIncompleteTasksToNextDay() {
+    if (!this.db) await this.init();
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const todayTasks = await this.getTasksForDay('today');
+        const tomorrowTasks = await this.getTasksForDay('tomorrow');
+        const afterTomorrowTasks = await this.getTasksForDay('afterTomorrow');
+        
+        const movedTasks = [];
+
+        // Move today's incomplete tasks to tomorrow
+        for (const task of todayTasks) {
+          if (!task.completed) {
+            await this.updateTask(task.id, { day: 'tomorrow' });
+            movedTasks.push({ from: 'today', to: 'tomorrow', task });
+          }
+        }
+
+        // Move tomorrow's incomplete tasks to after tomorrow
+        for (const task of tomorrowTasks) {
+          if (!task.completed) {
+            await this.updateTask(task.id, { day: 'afterTomorrow' });
+            movedTasks.push({ from: 'tomorrow', to: 'afterTomorrow', task });
+          }
+        }
+
+        // Remove after tomorrow's incomplete tasks (or move to a "backlog")
+        for (const task of afterTomorrowTasks) {
+          if (!task.completed) {
+            // For now, we'll keep them in afterTomorrow
+            // In a future version, we could move to a "backlog" day
+          }
+        }
+
+        console.log(`Moved ${movedTasks.length} incomplete tasks to next day`);
+        resolve(movedTasks);
+      } catch (error) {
+        console.error('Error moving incomplete tasks:', error);
+        reject(error);
+      }
     });
   }
 
