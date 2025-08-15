@@ -54,16 +54,51 @@ function setupDateLabels() {
 function setupEventListeners() {
   // Enter key to add tasks
   document.getElementById('today-task-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') addTask('today');
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTask('today');
+    }
   });
   
   document.getElementById('tomorrow-task-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') addTask('tomorrow');
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTask('tomorrow');
+    }
   });
   
   document.getElementById('after-tomorrow-task-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') addTask('afterTomorrow');
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTask('afterTomorrow');
+    }
   });
+
+  // Click events for add buttons
+  const todayBtn = document.getElementById('today-add-btn');
+  const tomorrowBtn = document.getElementById('tomorrow-add-btn');
+  const afterTomorrowBtn = document.getElementById('after-tomorrow-add-btn');
+  
+  if (todayBtn) {
+    todayBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      addTask('today');
+    });
+  }
+  
+  if (tomorrowBtn) {
+    tomorrowBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      addTask('tomorrow');
+    });
+  }
+  
+  if (afterTomorrowBtn) {
+    afterTomorrowBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      addTask('afterTomorrow');
+    });
+  }
 
   // Save data
   document.getElementById('save-btn').addEventListener('click', saveData);
@@ -81,6 +116,11 @@ function setupEventListeners() {
     }
   }, 500));
 }
+
+// Make functions globally available for onclick handlers
+window.addTask = addTask;
+window.removeTask = removeTask;
+window.toggleTask = toggleTask;
 
 // Debounce function to limit API calls
 function debounce(func, wait) {
@@ -163,6 +203,14 @@ async function addTask(day) {
     try {
       console.log('Adding task:', { day, taskText, time });
       
+      // Disable button temporarily to prevent double-clicks
+      const buttonId = day === 'afterTomorrow' ? 'after-tomorrow-add-btn' : `${day}-add-btn`;
+      const addButton = document.getElementById(buttonId);
+      if (addButton) {
+        addButton.disabled = true;
+        addButton.textContent = '...';
+      }
+      
       // Save to IndexedDB
       const savedTask = await window.taskDB.saveTaskWithTime(day, taskText, time);
       console.log('Task saved to IndexedDB:', savedTask);
@@ -176,37 +224,71 @@ async function addTask(day) {
       // Sort tasks by time
       sortTasksByTime(day);
       
-      // Clear inputs and re-render
+      // Clear task input only (keep time for next task)
       taskInput.value = '';
+      
+      // Re-render tasks
       renderTasks(day);
       
       // Notify other tabs with fresh data
       await notifyTabsOfChange();
       
+      // Focus back on task input for easy multiple additions
+      taskInput.focus();
+      
       console.log('Task added successfully and tabs notified');
+      
+      // Re-enable button
+      if (addButton) {
+        addButton.disabled = false;
+        addButton.textContent = '+';
+      }
+      
     } catch (error) {
       console.error('Error adding task:', error);
       
-      // Show error to user
-      const saveBtn = document.getElementById('save-btn');
-      const originalText = saveBtn.textContent;
-      saveBtn.textContent = 'Error saving task';
-      saveBtn.style.background = 'linear-gradient(135deg, #ff4757, #ff3742)';
+      // Re-enable button
+      const buttonId = day === 'afterTomorrow' ? 'after-tomorrow-add-btn' : `${day}-add-btn`;
+      const addButton = document.getElementById(buttonId);
+      if (addButton) {
+        addButton.disabled = false;
+        addButton.textContent = '+';
+      }
       
-      setTimeout(() => {
-        saveBtn.textContent = originalText;
-        saveBtn.style.background = 'linear-gradient(135deg, #4ecdc4, #44a08d)';
-      }, 2000);
+      // Show error to user
+      showErrorMessage('Error saving task');
     }
   } else {
     // Show validation message
     if (!taskText) {
       taskInput.style.borderColor = '#ff4757';
+      taskInput.focus();
       setTimeout(() => {
         taskInput.style.borderColor = '#333';
       }, 2000);
     }
+    if (!time) {
+      timeInput.style.borderColor = '#ff4757';
+      setTimeout(() => {
+        timeInput.style.borderColor = '#333';
+      }, 2000);
+    }
   }
+}
+
+// Show error message
+function showErrorMessage(message) {
+  const saveBtn = document.getElementById('save-btn');
+  const originalText = saveBtn.textContent;
+  const originalBackground = saveBtn.style.background;
+  
+  saveBtn.textContent = message;
+  saveBtn.style.background = 'linear-gradient(135deg, #ff4757, #ff3742)';
+  
+  setTimeout(() => {
+    saveBtn.textContent = originalText;
+    saveBtn.style.background = originalBackground || 'linear-gradient(135deg, #4ecdc4, #44a08d)';
+  }, 2000);
 }
 
 // Remove task
