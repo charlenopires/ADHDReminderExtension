@@ -158,7 +158,7 @@ function importData() {
   input.type = 'file';
   input.accept = '.json';
   
-  input.onchange = async function(event) {
+  input.addEventListener('change', async function(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -194,7 +194,7 @@ function importData() {
       console.error('Error importing data:', error);
       showStatus('Error importing data: ' + error.message, 'error');
     }
-  };
+  });
   
   input.click();
 }

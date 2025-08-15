@@ -1,4 +1,5 @@
-(function () {
+// ADHD Task Manager - New Tab functionality
+function initializeNewTabModule() {
   let tasksData = {
     currentProject: '',
     today: [],
@@ -8,13 +9,39 @@
 
   let isProjectVisible = false;
 
-  document.addEventListener("DOMContentLoaded", async function () {
-    await initializeNewTab();
-  });
+  // Initialize when new tab loads
+  function initializeNewTabPage() {
+    if (document.readyState === 'loading') {
+      document.addEventListener("DOMContentLoaded", initializeNewTabAsync);
+    } else {
+      initializeNewTabAsync();
+    }
+  }
+
+  async function initializeNewTabAsync() {
+    try {
+      await initializeNewTab();
+    } catch (error) {
+      console.error('Failed to initialize new tab:', error);
+      // Fallback initialization
+      setupDateLabels();
+      setupToggler();
+      loadTasksDataFromChromeStorage();
+      setupMessageListener();
+    }
+  }
+
+  // Start initialization
+  initializeNewTabPage();
 
   // Initialize new tab
   async function initializeNewTab() {
     try {
+      // Check if taskDB is available
+      if (!window.taskDB) {
+        throw new Error('TaskDB not available');
+      }
+      
       // Initialize database
       await window.taskDB.init();
       
@@ -29,6 +56,7 @@
       setupDateLabels();
       loadTasksDataFromChromeStorage();
       setupToggler();
+      setupMessageListener();
     }
   }
 
@@ -44,19 +72,38 @@
     const shortOptions = { day: 'numeric', month: 'short' };
     
     // Today keeps full format
-    document.getElementById('today-date').textContent = today.toLocaleDateString('en-US', options);
+    const todayDateEl = document.getElementById('today-date');
+    if (todayDateEl) {
+      todayDateEl.textContent = today.toLocaleDateString('en-US', options);
+    }
     
     // Tomorrow and day after tomorrow show date as title
-    document.getElementById('tomorrow-title').textContent = tomorrow.toLocaleDateString('en-US', options);
-    document.getElementById('tomorrow-date').textContent = tomorrow.toLocaleDateString('en-US', shortOptions);
+    const tomorrowTitleEl = document.getElementById('tomorrow-title');
+    const tomorrowDateEl = document.getElementById('tomorrow-date');
+    if (tomorrowTitleEl) {
+      tomorrowTitleEl.textContent = tomorrow.toLocaleDateString('en-US', options);
+    }
+    if (tomorrowDateEl) {
+      tomorrowDateEl.textContent = tomorrow.toLocaleDateString('en-US', shortOptions);
+    }
     
-    document.getElementById('after-tomorrow-title').textContent = afterTomorrow.toLocaleDateString('en-US', options);
-    document.getElementById('after-tomorrow-date').textContent = afterTomorrow.toLocaleDateString('en-US', shortOptions);
+    const afterTomorrowTitleEl = document.getElementById('after-tomorrow-title');
+    const afterTomorrowDateEl = document.getElementById('after-tomorrow-date');
+    if (afterTomorrowTitleEl) {
+      afterTomorrowTitleEl.textContent = afterTomorrow.toLocaleDateString('en-US', options);
+    }
+    if (afterTomorrowDateEl) {
+      afterTomorrowDateEl.textContent = afterTomorrow.toLocaleDateString('en-US', shortOptions);
+    }
   }
 
   // Load tasks data from IndexedDB
   async function loadTasksData() {
     try {
+      if (!window.taskDB) {
+        throw new Error('TaskDB not available');
+      }
+      
       console.log('New tab loading data from IndexedDB...');
       
       // Load current project
@@ -104,18 +151,20 @@
   function displayCurrentProject() {
     const projectDisplay = document.getElementById('current-project-display');
     
-    if (tasksData.currentProject) {
-      if (isProjectVisible) {
-        projectDisplay.textContent = tasksData.currentProject;
-        projectDisplay.className = '';
+    if (projectDisplay) {
+      if (tasksData.currentProject) {
+        if (isProjectVisible) {
+          projectDisplay.textContent = tasksData.currentProject;
+          projectDisplay.className = '';
+        } else {
+          projectDisplay.textContent = '●'.repeat(Math.max(tasksData.currentProject.length, 10));
+          projectDisplay.className = 'project-hidden';
+        }
       } else {
-        projectDisplay.textContent = '●'.repeat(Math.max(tasksData.currentProject.length, 10));
-        projectDisplay.className = 'project-hidden';
+        projectDisplay.textContent = 'No project defined';
+        projectDisplay.style.color = '#666';
+        projectDisplay.style.fontSize = '1.5rem';
       }
-    } else {
-      projectDisplay.textContent = 'No project defined';
-      projectDisplay.style.color = '#666';
-      projectDisplay.style.fontSize = '1.5rem';
     }
   }
 
@@ -217,20 +266,30 @@
       const isOverdue = isTaskOverdue(task, day);
       const completedClass = task.completed ? ' completed' : '';
       const dayClass = day === 'afterTomorrow' ? 'after-tomorrow' : day;
+      const timeClass = isOverdue ? 'overdue' : '';
       
       taskElement.className = `task-item ${dayClass}${completedClass}`;
       
-      const timeDisplay = task.time || '--:--';
-      const timeClass = isOverdue ? 'overdue' : '';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'task-checkbox';
+      checkbox.checked = task.completed;
+      checkbox.setAttribute('data-day', day);
+      checkbox.setAttribute('data-task-id', task.id);
+      taskElement.appendChild(checkbox);
       
-      taskElement.innerHTML = `
-        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} 
-               onchange="toggleTaskCompletion('${day}', ${task.id})">
-        <div class="task-time ${timeClass}">${timeDisplay}</div>
-        <div class="task-content">
-          <div class="task-text">${task.text}</div>
-        </div>
-      `;
+      const timeDiv = document.createElement('div');
+      timeDiv.className = `task-time ${timeClass}`;
+      timeDiv.textContent = task.time || '--:--';
+      taskElement.appendChild(timeDiv);
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'task-content';
+      const textDiv = document.createElement('div');
+      textDiv.className = 'task-text';
+      textDiv.textContent = task.text;
+      contentDiv.appendChild(textDiv);
+      taskElement.appendChild(contentDiv);
       
       // Add animation with delay
       setTimeout(() => {
@@ -248,17 +307,19 @@
   function setupToggler() {
     const toggler = document.getElementById('toggler');
     
-    toggler.addEventListener('click', function() {
-      isProjectVisible = !isProjectVisible;
-      
-      if (isProjectVisible) {
-        toggler.className = 'fas fa-eye-slash';
-      } else {
-        toggler.className = 'far fa-eye';
-      }
-      
-      displayCurrentProject();
-    });
+    if (toggler) {
+      toggler.addEventListener('click', function() {
+        isProjectVisible = !isProjectVisible;
+        
+        if (isProjectVisible) {
+          toggler.className = 'fas fa-eye-slash';
+        } else {
+          toggler.className = 'far fa-eye';
+        }
+        
+        displayCurrentProject();
+      });
+    }
   }
 
   // Setup message listener for real-time updates
@@ -286,6 +347,15 @@
       }
       
       return true; // Keep message channel open for async response
+    });
+
+    // Event delegation for task checkboxes
+    document.addEventListener('change', function(e) {
+      if (e.target.classList.contains('task-checkbox')) {
+        const day = e.target.getAttribute('data-day');
+        const taskId = parseInt(e.target.getAttribute('data-task-id'));
+        toggleTaskCompletion(day, taskId);
+      }
     });
   }
 
@@ -375,4 +445,13 @@
     checkAndMoveOverdueTasks();
     checkEndOfDay();
   }, 5000);
+}
+
+// Initialize when DOM is ready
+(function() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeNewTabModule);
+  } else {
+    initializeNewTabModule();
+  }
 })();

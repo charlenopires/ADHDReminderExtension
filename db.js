@@ -8,11 +8,16 @@ class TaskDB {
 
   // Initialize database
   async init() {
+    // Check if IndexedDB is available
+    if (!window.indexedDB) {
+      throw new Error('IndexedDB not supported');
+    }
+
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.version);
 
       request.onerror = () => {
-        console.error('Database failed to open');
+        console.error('Database failed to open:', request.error);
         reject(request.error);
       };
 
@@ -402,4 +407,10 @@ class TaskDB {
 }
 
 // Create global instance
-window.taskDB = new TaskDB();
+try {
+  window.taskDB = new TaskDB();
+  console.log('TaskDB instance created successfully');
+} catch (error) {
+  console.error('Failed to create TaskDB instance:', error);
+  window.taskDB = null;
+}

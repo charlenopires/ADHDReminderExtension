@@ -1,0 +1,79 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Dark background gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2a2a2a;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Primary gradient for accents -->
+    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ecdc4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#45b7d1;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    
+    <!-- Glow filter for the icon -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Dark background square -->
+  <rect x="0" y="0" width="128" height="128" rx="16" ry="16" 
+        fill="url(#bgGradient)" 
+        filter="url(#shadow)"/>
+  
+  <!-- Calendar/Task icon centered and scaled -->
+  <g transform="translate(64, 64) scale(2.5)" filter="url(#glow)">
+    <!-- Main calendar structure -->
+    <path d="M6.97,30.75H25.03c.41,0,.75-.34,.75-.75V3.89c0-.41-.34-.75-.75-.75h-2.56v-1.14c0-.41-.34-.75-.75-.75s-.75,.34-.75,.75v1.14h-4.22v-1.14c0-.41-.34-.75-.75-.75s-.75,.34-.75,.75v1.14h-4.22v-1.14c0-.41-.34-.75-.75-.75s-.75,.34-.75,.75v1.14h-2.56c-.41,0-.75,.34-.75,.75V30c0,.41,.34,.75,.75,.75Zm.75-26.11h1.81v1.14c0,.41,.34,.75,.75,.75s.75-.34,.75-.75v-1.14h4.22v1.14c0,.41,.34,.75,.75,.75s.75-.34,.75-.75v-1.14h4.22v1.14c0,.41,.34,.75,.75,.75s.75-.34,.75-.75v-1.14h1.81V29.25H7.72V4.64Z" 
+          fill="#ffffff" 
+          transform="translate(-16, -16)"/>
+    
+    <!-- Task lines with gradient colors -->
+    <path d="M16.86,9.66h-6.57c-.41,0-.75,.34-.75,.75s.34,.75,.75,.75h6.57c.41,0,.75-.34,.75-.75s-.34-.75-.75-.75Z" 
+          fill="url(#primaryGradient)" 
+          transform="translate(-16, -16)"/>
+    
+    <path d="M16.86,16.19h-6.57c-.41,0-.75,.34-.75,.75s.34,.75,.75,.75h6.57c.41,0,.75-.34,.75-.75s-.34-.75-.75-.75Z" 
+          fill="#4ecdc4" 
+          transform="translate(-16, -16)"/>
+    
+    <path d="M16.86,22.73h-6.57c-.41,0-.75,.34-.75,.75s.34,.75,.75,.75h6.57c.41,0,.75-.34,.75-.75s-.34-.75-.75-.75Z" 
+          fill="#96ceb4" 
+          transform="translate(-16, -16)"/>
+    
+    <!-- Shorter task indicators -->
+    <path d="M10.28,14.27h3.61c.41,0,.75-.34,.75-.75s-.34-.75-.75-.75h-3.61c-.41,0-.75,.34-.75,.75s.34,.75,.75,.75Z" 
+          fill="#45b7d1" 
+          transform="translate(-16, -16)"/>
+    
+    <path d="M10.28,21h3.61c.41,0,.75-.34,.75-.75s-.34-.75-.75-.75h-3.61c-.41,0-.75,.34,.75,.75s.34,.75,.75,.75Z" 
+          fill="#ff6b6b" 
+          transform="translate(-16, -16)"/>
+    
+    <path d="M13.89,25.79h-3.61c-.41,0-.75,.34-.75,.75s.34,.75,.75,.75h3.61c.41,0,.75-.34,.75-.75s-.34-.75-.75-.75Z" 
+          fill="#ffffff" 
+          opacity="0.8" 
+          transform="translate(-16, -16)"/>
+  </g>
+  
+  <!-- Subtle animated border -->
+  <rect x="2" y="2" width="124" height="124" rx="14" ry="14" 
+        fill="none" 
+        stroke="url(#primaryGradient)" 
+        stroke-width="1" 
+        opacity="0.4" 
+        stroke-dasharray="4,4">
+    <animateTransform attributeName="transform" type="rotate" values="0;360" dur="20s" repeatCount="indefinite" transform-origin="64 64"/>
+  </rect>
+</svg>

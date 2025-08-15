@@ -7,13 +7,33 @@ let tasksData = {
 };
 
 // Initialize when popup loads
-document.addEventListener('DOMContentLoaded', async function() {
-  await initializeApp();
-});
+function initializePopup() {
+  initializePopupAsync();
+}
+
+async function initializePopupAsync() {
+  try {
+    await initializeApp();
+  } catch (error) {
+    console.error('Failed to initialize popup:', error);
+    // Fallback initialization
+    setupDateLabels();
+    setupEventListeners();
+    loadDataFromChromeStorage();
+  }
+}
+
+// Start initialization
+initializePopup();
 
 // Initialize application
 async function initializeApp() {
   try {
+    // Check if taskDB is available
+    if (!window.taskDB) {
+      throw new Error('TaskDB not available');
+    }
+    
     // Initialize database
     await window.taskDB.init();
     
@@ -24,6 +44,8 @@ async function initializeApp() {
   } catch (error) {
     console.error('Failed to initialize app:', error);
     // Fallback to Chrome storage if IndexedDB fails
+    setupDateLabels();
+    setupEventListeners();
     loadDataFromChromeStorage();
   }
 }
@@ -40,39 +62,48 @@ function setupDateLabels() {
   const shortOptions = { day: 'numeric', month: 'short' };
   
   // Today keeps full format
-  document.getElementById('today-date').textContent = today.toLocaleDateString('en-US', options);
+  const todayDateEl = document.getElementById('today-date');
+  if (todayDateEl) {
+    todayDateEl.textContent = today.toLocaleDateString('en-US', options);
+  }
   
   // Tomorrow and day after tomorrow show date as title
-  document.getElementById('tomorrow-title').textContent = tomorrow.toLocaleDateString('en-US', options);
-  document.getElementById('tomorrow-date').textContent = tomorrow.toLocaleDateString('en-US', shortOptions);
+  const tomorrowTitleEl = document.getElementById('tomorrow-title');
+  const tomorrowDateEl = document.getElementById('tomorrow-date');
+  if (tomorrowTitleEl) {
+    tomorrowTitleEl.textContent = tomorrow.toLocaleDateString('en-US', options);
+  }
+  if (tomorrowDateEl) {
+    tomorrowDateEl.textContent = tomorrow.toLocaleDateString('en-US', shortOptions);
+  }
   
-  document.getElementById('after-tomorrow-title').textContent = afterTomorrow.toLocaleDateString('en-US', options);
-  document.getElementById('after-tomorrow-date').textContent = afterTomorrow.toLocaleDateString('en-US', shortOptions);
+  const afterTomorrowTitleEl = document.getElementById('after-tomorrow-title');
+  const afterTomorrowDateEl = document.getElementById('after-tomorrow-date');
+  if (afterTomorrowTitleEl) {
+    afterTomorrowTitleEl.textContent = afterTomorrow.toLocaleDateString('en-US', options);
+  }
+  if (afterTomorrowDateEl) {
+    afterTomorrowDateEl.textContent = afterTomorrow.toLocaleDateString('en-US', shortOptions);
+  }
 }
 
 // Setup event listeners
 function setupEventListeners() {
   // Enter key to add tasks
-  document.getElementById('today-task-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addTask('today');
-    }
-  });
+  const todayTaskInput = document.getElementById('today-task-input');
+  if (todayTaskInput) {
+    todayTaskInput.addEventListener('keypress', handleTaskInputKeypress);
+  }
   
-  document.getElementById('tomorrow-task-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addTask('tomorrow');
-    }
-  });
+  const tomorrowTaskInput = document.getElementById('tomorrow-task-input');
+  if (tomorrowTaskInput) {
+    tomorrowTaskInput.addEventListener('keypress', handleTaskInputKeypress);
+  }
   
-  document.getElementById('after-tomorrow-task-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addTask('afterTomorrow');
-    }
-  });
+  const afterTomorrowTaskInput = document.getElementById('after-tomorrow-task-input');
+  if (afterTomorrowTaskInput) {
+    afterTomorrowTaskInput.addEventListener('keypress', handleTaskInputKeypress);
+  }
 
   // Click events for add buttons
   const todayBtn = document.getElementById('today-add-btn');
@@ -80,47 +111,83 @@ function setupEventListeners() {
   const afterTomorrowBtn = document.getElementById('after-tomorrow-add-btn');
   
   if (todayBtn) {
-    todayBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      addTask('today');
-    });
+    todayBtn.addEventListener('click', handleAddTaskClick);
   }
   
   if (tomorrowBtn) {
-    tomorrowBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      addTask('tomorrow');
-    });
+    tomorrowBtn.addEventListener('click', handleAddTaskClick);
   }
   
   if (afterTomorrowBtn) {
-    afterTomorrowBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      addTask('afterTomorrow');
-    });
+    afterTomorrowBtn.addEventListener('click', handleAddTaskClick);
   }
 
   // Save data
-  document.getElementById('save-btn').addEventListener('click', saveData);
+  const saveBtn = document.getElementById('save-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', saveData);
+  }
   
   // Auto-save current project on input
-  document.getElementById('current-project').addEventListener('input', debounce(async function() {
-    const projectName = this.value;
-    try {
-      await window.taskDB.saveProject(projectName);
-      tasksData.currentProject = projectName;
-      // Notify other tabs about project change
-      await notifyTabsOfChange();
-    } catch (error) {
-      console.error('Error saving project:', error);
-    }
-  }, 500));
+  const currentProjectInput = document.getElementById('current-project');
+  if (currentProjectInput) {
+    currentProjectInput.addEventListener('input', handleProjectInput);
+  }
+
+  // Event delegation for task checkboxes and remove buttons
+  document.addEventListener('click', handleDocumentClick);
+  document.addEventListener('change', handleDocumentChange);
 }
 
-// Make functions globally available for onclick handlers
-window.addTask = addTask;
-window.removeTask = removeTask;
-window.toggleTask = toggleTask;
+// Event Handlers
+function handleTaskInputKeypress(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const day = e.target.id.split('-')[0];
+    addTask(day);
+  }
+}
+
+function handleAddTaskClick(e) {
+  e.preventDefault();
+  const day = e.target.id.split('-')[0];
+  addTask(day);
+}
+
+async function handleProjectInput(e) {
+  const projectName = e.target.value;
+  try {
+    if (window.taskDB) {
+      await window.taskDB.saveProject(projectName);
+    }
+    tasksData.currentProject = projectName;
+    // Notify other tabs about project change
+    await notifyTabsOfChange();
+  } catch (error) {
+    console.error('Error saving project:', error);
+  }
+}
+
+function handleDocumentClick(e) {
+  // Handle remove task buttons
+  if (e.target.classList.contains('remove-task')) {
+    const day = e.target.getAttribute('data-day');
+    const taskId = parseInt(e.target.getAttribute('data-task-id'));
+    removeTask(day, taskId);
+  }
+}
+
+function handleDocumentChange(e) {
+  // Handle task checkboxes
+  if (e.target.classList.contains('task-checkbox')) {
+    const day = e.target.getAttribute('data-day');
+    const taskId = parseInt(e.target.getAttribute('data-task-id'));
+    toggleTask(day, taskId);
+  }
+}
+
+
+// Functions are now handled via event delegation, no need for global exposure
 
 // Debounce function to limit API calls
 function debounce(func, wait) {
@@ -138,11 +205,18 @@ function debounce(func, wait) {
 // Load saved data from IndexedDB
 async function loadData() {
   try {
+    if (!window.taskDB) {
+      throw new Error('TaskDB not available');
+    }
+    
     console.log('Loading data from IndexedDB...');
     
     // Load current project
     const currentProject = await window.taskDB.getCurrentProject();
-    document.getElementById('current-project').value = currentProject || '';
+    const projectInput = document.getElementById('current-project');
+    if (projectInput) {
+      projectInput.value = currentProject || '';
+    }
     tasksData.currentProject = currentProject || '';
     
     // Load all tasks
@@ -224,8 +298,9 @@ async function addTask(day) {
       // Sort tasks by time
       sortTasksByTime(day);
       
-      // Clear task input only (keep time for next task)
+      // Clear inputs for next task
       taskInput.value = '';
+      timeInput.value = '';
       
       // Re-render tasks
       renderTasks(day);
@@ -377,7 +452,10 @@ function renderTasks(day) {
   const containerId = day === 'afterTomorrow' ? 'after-tomorrow-tasks' : `${day}-tasks`;
   const container = document.getElementById(containerId);
   
-  container.innerHTML = '';
+  // Clear container safely
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
   
   if (tasksData[day] && tasksData[day].length > 0) {
     // Sort tasks by time before rendering
@@ -390,15 +468,35 @@ function renderTasks(day) {
       const overdueClass = isOverdue ? ' task-overdue' : '';
       
       taskElement.className = `task-item${completedClass}`;
-      taskElement.innerHTML = `
-        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} 
-               onchange="toggleTask('${day}', ${task.id})">
-        <div class="task-time${overdueClass}">${task.time || '--:--'}</div>
-        <div class="task-content">
-          <span class="task-text">${task.text}</span>
-        </div>
-        <button class="remove-task" onclick="removeTask('${day}', ${task.id})">×</button>
-      `;
+      
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'task-checkbox';
+      checkbox.checked = task.completed;
+      checkbox.setAttribute('data-day', day);
+      checkbox.setAttribute('data-task-id', task.id);
+      taskElement.appendChild(checkbox);
+      
+      const timeDiv = document.createElement('div');
+      timeDiv.className = `task-time${overdueClass}`;
+      timeDiv.textContent = task.time || '--:--';
+      taskElement.appendChild(timeDiv);
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'task-content';
+      const textSpan = document.createElement('span');
+      textSpan.className = 'task-text';
+      textSpan.textContent = task.text;
+      contentDiv.appendChild(textSpan);
+      taskElement.appendChild(contentDiv);
+      
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-task';
+      removeBtn.setAttribute('data-day', day);
+      removeBtn.setAttribute('data-task-id', task.id);
+      removeBtn.textContent = '×';
+      taskElement.appendChild(removeBtn);
+      
       container.appendChild(taskElement);
     });
   }
@@ -472,19 +570,6 @@ async function notifyTabsOfChange() {
       // Ignore errors if no listeners
     });
     
-    // Also try direct tab messaging
-    chrome.tabs.query({}, (tabs) => {
-      tabs.forEach(tab => {
-        if (tab.url && (tab.url.includes('chrome://newtab/') || tab.url.includes('newtab.html'))) {
-          chrome.tabs.sendMessage(tab.id, {
-            type: 'TASKS_UPDATED',
-            data: freshData
-          }).catch(() => {
-            // Ignore errors for tabs that don't have listeners
-          });
-        }
-      });
-    });
   } catch (error) {
     console.error('Error notifying tabs of changes:', error);
   }
