@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Reminder Extension for ADHD People",
-    "version": "1.0",
-    "description": "Helps ADHD people to remember important things by displaying them on new tabs",
+    "name": "ADHD Task Manager",
+    "version": "2.0",
+    "description": "A modern task management extension designed for people with ADHD. Organize your projects and daily tasks with a beautiful, distraction-free interface.",
     "permissions": ["storage"],
     "action": {
       "default_popup": "popup.html",
@@ -19,5 +19,8 @@
     },
     "chrome_url_overrides": {
       "newtab": "newtab.html"
+    },
+    "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'self'"
     }
   }

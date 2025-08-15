@@ -8,11 +8,29 @@
 
   let isProjectVisible = false;
 
-  document.addEventListener("DOMContentLoaded", function () {
-    setupDateLabels();
-    loadTasksData();
-    setupToggler();
+  document.addEventListener("DOMContentLoaded", async function () {
+    await initializeNewTab();
   });
+
+  // Initialize new tab
+  async function initializeNewTab() {
+    try {
+      // Initialize database
+      await window.taskDB.init();
+      
+      // Setup UI and load data
+      setupDateLabels();
+      await loadTasksData();
+      setupToggler();
+      setupMessageListener();
+    } catch (error) {
+      console.error('Failed to initialize new tab:', error);
+      // Fallback to Chrome storage
+      setupDateLabels();
+      loadTasksDataFromChromeStorage();
+      setupToggler();
+    }
+  }
 
   // Setup date labels
   function setupDateLabels() {
@@ -36,8 +54,29 @@
     document.getElementById('after-tomorrow-date').textContent = afterTomorrow.toLocaleDateString('en-US', shortOptions);
   }
 
-  // Load tasks data
-  function loadTasksData() {
+  // Load tasks data from IndexedDB
+  async function loadTasksData() {
+    try {
+      // Load current project
+      const currentProject = await window.taskDB.getCurrentProject();
+      tasksData.currentProject = currentProject;
+      
+      // Load all tasks
+      const allTasks = await window.taskDB.getAllTasks();
+      tasksData = { ...tasksData, ...allTasks };
+      
+      // Display data
+      displayCurrentProject();
+      displayTasks();
+    } catch (error) {
+      console.error('Error loading tasks data:', error);
+      // Fallback to Chrome storage
+      loadTasksDataFromChromeStorage();
+    }
+  }
+
+  // Fallback to Chrome storage
+  function loadTasksDataFromChromeStorage() {
     chrome.storage.local.get(['tasksData'], function(result) {
       if (result.tasksData) {
         tasksData = result.tasksData;
@@ -136,7 +175,28 @@
     });
   }
 
-  // Atualizar dados quando houver mudanças no storage
+  // Setup message listener for real-time updates
+  function setupMessageListener() {
+    // Listen for messages from popup
+    chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+      if (message.type === 'TASKS_UPDATED') {
+        tasksData = message.data;
+        displayCurrentProject();
+        displayTasks();
+      }
+    });
+  }
+
+  // Refresh data periodically to stay in sync
+  setInterval(async function() {
+    try {
+      await loadTasksData();
+    } catch (error) {
+      // Silently fail and try again next time
+    }
+  }, 30000); // Refresh every 30 seconds
+
+  // Listen for storage changes (fallback)
   chrome.storage.onChanged.addListener(function(changes, namespace) {
     if (changes.tasksData) {
       tasksData = changes.tasksData.newValue || {
@@ -148,6 +208,17 @@
       
       displayCurrentProject();
       displayTasks();
+    }
+  });
+
+  // Handle visibility change to refresh data when tab becomes active
+  document.addEventListener('visibilitychange', async function() {
+    if (!document.hidden) {
+      try {
+        await loadTasksData();
+      } catch (error) {
+        // Silently fail
+      }
     }
   });
 })();

@@ -339,27 +339,49 @@
         font-weight: 400;
       }
 
-      @media (max-width: 1024px) {
+      @media (max-width: 1200px) {
         .days-container {
-          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
           gap: 20px;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .days-container {
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 18px;
+        }
+        
+        .day-column {
+          padding: 20px;
+        }
+        
+        .day-header {
+          margin-bottom: 20px;
+          padding-bottom: 14px;
+        }
+        
+        .day-title {
+          font-size: 17px;
         }
       }
 
       @media (max-width: 768px) {
         body {
-          padding: 16px;
+          padding: 12px;
         }
         
         .header {
           flex-direction: column;
           gap: 16px;
           align-items: stretch;
+          margin-bottom: 20px;
         }
         
         .current-project {
           margin-right: 0;
           text-align: center;
+          padding: 12px 20px;
         }
         
         .days-container {
@@ -368,7 +390,143 @@
         }
         
         #current-project-display {
-          font-size: 1.5rem;
+          font-size: 1.4rem;
+        }
+        
+        .day-column {
+          padding: 18px;
+        }
+        
+        .day-title {
+          font-size: 16px;
+        }
+        
+        .task-item {
+          padding: 14px 16px;
+        }
+        
+        .tasks-timeline {
+          padding-left: 20px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        body {
+          padding: 8px;
+        }
+        
+        .current-project {
+          padding: 10px 16px;
+        }
+        
+        #current-project-display {
+          font-size: 1.2rem;
+          min-height: 32px;
+        }
+        
+        .project-label {
+          font-size: 10px;
+          margin-bottom: 4px;
+        }
+        
+        .day-column {
+          padding: 16px;
+          border-radius: 12px;
+        }
+        
+        .day-header {
+          gap: 10px;
+          margin-bottom: 16px;
+          padding-bottom: 12px;
+        }
+        
+        .day-icon {
+          width: 20px;
+          height: 20px;
+        }
+        
+        .day-title {
+          font-size: 15px;
+        }
+        
+        .day-date {
+          font-size: 10px;
+          padding: 3px 6px;
+        }
+        
+        .task-item {
+          padding: 12px 14px;
+          margin-bottom: 12px;
+        }
+        
+        .task-text {
+          font-size: 13px;
+          line-height: 1.5;
+        }
+        
+        .tasks-timeline {
+          padding-left: 18px;
+        }
+        
+        .tasks-timeline::before {
+          left: 8px;
+        }
+        
+        .task-item::before {
+          left: -26px;
+          width: 12px;
+          height: 12px;
+        }
+        
+        .empty-state {
+          padding: 40px 16px;
+        }
+        
+        .empty-state i {
+          font-size: 48px;
+          margin-bottom: 16px;
+        }
+        
+        .empty-state p {
+          font-size: 13px;
+        }
+        
+        .toggle-container {
+          padding: 6px 12px;
+        }
+        
+        .toggle-container span {
+          font-size: 12px;
+        }
+        
+        #toggler {
+          font-size: 16px;
+        }
+      }
+
+      @media (max-width: 320px) {
+        .days-container {
+          gap: 12px;
+        }
+        
+        .day-column {
+          padding: 14px;
+        }
+        
+        .current-project {
+          padding: 8px 14px;
+        }
+        
+        #current-project-display {
+          font-size: 1.1rem;
+        }
+        
+        .day-title {
+          font-size: 14px;
+        }
+        
+        .task-text {
+          font-size: 12px;
         }
       }
 
@@ -477,6 +635,7 @@
       </div>
     </div>
 
+    <script src="db.js"></script>
     <script src="newtab.js"></script>
   </body>
 </html>

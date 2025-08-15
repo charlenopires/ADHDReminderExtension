@@ -26,8 +26,9 @@ A modern, beautiful Chrome extension designed specifically for people with ADHD 
 ### 🔄 **Smart Integration**
 - **New Tab Override**: See your tasks every time you open a new tab
 - **Popup Access**: Quick access via extension icon
-- **Persistent Storage**: All data saved locally in Chrome
+- **IndexedDB Storage**: Advanced local database storage for better performance
 - **Real-time Sync**: Changes sync between popup and new tab instantly
+- **Offline Support**: Works completely offline with local data storage
 
 ## 📸 Screenshots
 
@@ -84,6 +85,7 @@ Every new tab shows your organized tasks:
 - **HTML5** - Structure and layout
 - **CSS3** - Modern styling with gradients and animations
 - **JavaScript** - Task management and Chrome API integration
+- **IndexedDB** - Advanced client-side database for task storage
 - **Chrome Extension API** - Storage and new tab override
 - **Font Awesome** - Beautiful icons
 - **Inter Font** - Clean, readable typography
@@ -91,6 +93,7 @@ Every new tab shows your organized tasks:
 ### File Structure
 ```
 ├── manifest.json          # Extension configuration
+├── db.js                  # IndexedDB database manager
 ├── popup.html             # Popup interface
 ├── popup.js              # Popup functionality
 ├── newtab.html           # New tab dashboard
@@ -103,7 +106,8 @@ Every new tab shows your organized tasks:
 ```
 
 ### Permissions
-- **Storage**: To save your tasks and project data locally
+- **Storage**: To save your tasks and project data locally (fallback)
+- **IndexedDB**: Advanced local database for better performance and reliability
 - **New Tab Override**: To display your tasks on new tabs
 
 ## 🎨 Design Philosophy

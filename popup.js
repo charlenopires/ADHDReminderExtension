@@ -7,11 +7,26 @@ let tasksData = {
 };
 
 // Initialize when popup loads
-document.addEventListener('DOMContentLoaded', function() {
-  loadData();
-  setupDateLabels();
-  setupEventListeners();
+document.addEventListener('DOMContentLoaded', async function() {
+  await initializeApp();
 });
+
+// Initialize application
+async function initializeApp() {
+  try {
+    // Initialize database
+    await window.taskDB.init();
+    
+    // Load data and setup UI
+    await loadData();
+    setupDateLabels();
+    setupEventListeners();
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+    // Fallback to Chrome storage if IndexedDB fails
+    loadDataFromChromeStorage();
+  }
+}
 
 // Setup date labels
 function setupDateLabels() {
@@ -53,14 +68,58 @@ function setupEventListeners() {
   // Save data
   document.getElementById('save-btn').addEventListener('click', saveData);
   
-  // Auto-save current project
-  document.getElementById('current-project').addEventListener('input', function() {
-    tasksData.currentProject = this.value;
-  });
+  // Auto-save current project on input
+  document.getElementById('current-project').addEventListener('input', debounce(async function() {
+    const projectName = this.value;
+    try {
+      await window.taskDB.saveProject(projectName);
+      tasksData.currentProject = projectName;
+      // Notify other tabs about project change
+      notifyTabsOfChange();
+    } catch (error) {
+      console.error('Error saving project:', error);
+    }
+  }, 500));
 }
 
-// Load saved data
-function loadData() {
+// Debounce function to limit API calls
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Load saved data from IndexedDB
+async function loadData() {
+  try {
+    // Load current project
+    const currentProject = await window.taskDB.getCurrentProject();
+    document.getElementById('current-project').value = currentProject;
+    tasksData.currentProject = currentProject;
+    
+    // Load all tasks
+    const allTasks = await window.taskDB.getAllTasks();
+    tasksData = { ...tasksData, ...allTasks };
+    
+    // Render tasks
+    renderTasks('today');
+    renderTasks('tomorrow');
+    renderTasks('afterTomorrow');
+  } catch (error) {
+    console.error('Error loading data:', error);
+    // Fallback to Chrome storage
+    loadDataFromChromeStorage();
+  }
+}
+
+// Fallback to Chrome storage
+function loadDataFromChromeStorage() {
   chrome.storage.local.get(['tasksData'], function(result) {
     if (result.tasksData) {
       tasksData = result.tasksData;
@@ -77,27 +136,61 @@ function loadData() {
 }
 
 // Add task
-function addTask(day) {
+async function addTask(day) {
   const inputId = day === 'afterTomorrow' ? 'after-tomorrow-task-input' : `${day}-task-input`;
   const input = document.getElementById(inputId);
   const taskText = input.value.trim();
   
   if (taskText) {
-    tasksData[day].push({
-      id: Date.now(),
-      text: taskText,
-      completed: false
-    });
-    
-    input.value = '';
-    renderTasks(day);
+    try {
+      // Save to IndexedDB
+      const newTask = await window.taskDB.saveTask(day, taskText);
+      
+      // Update local state
+      tasksData[day].push(newTask);
+      
+      // Clear input and re-render
+      input.value = '';
+      renderTasks(day);
+      
+      // Notify other tabs
+      notifyTabsOfChange();
+    } catch (error) {
+      console.error('Error adding task:', error);
+      // Fallback to local state only
+      const fallbackTask = {
+        id: Date.now(),
+        text: taskText,
+        completed: false,
+        created: new Date().toISOString()
+      };
+      tasksData[day].push(fallbackTask);
+      input.value = '';
+      renderTasks(day);
+    }
   }
 }
 
 // Remove task
-function removeTask(day, taskId) {
-  tasksData[day] = tasksData[day].filter(task => task.id !== taskId);
-  renderTasks(day);
+async function removeTask(day, taskId) {
+  try {
+    // Remove from IndexedDB
+    await window.taskDB.deleteTask(taskId);
+    
+    // Update local state
+    tasksData[day] = tasksData[day].filter(task => task.id !== taskId);
+    
+    // Re-render
+    renderTasks(day);
+    
+    // Notify other tabs
+    notifyTabsOfChange();
+  } catch (error) {
+    console.error('Error removing task:', error);
+    // Fallback to local state only
+    tasksData[day] = tasksData[day].filter(task => task.id !== taskId);
+    renderTasks(day);
+  }
 }
 
 // Render tasks
@@ -107,24 +200,27 @@ function renderTasks(day) {
   
   container.innerHTML = '';
   
-  tasksData[day].forEach(task => {
-    const taskElement = document.createElement('div');
-    taskElement.className = 'task-item';
-    taskElement.innerHTML = `
-      <span>${task.text}</span>
-      <button class="remove-task" onclick="removeTask('${day}', ${task.id})">×</button>
-    `;
-    container.appendChild(taskElement);
-  });
+  if (tasksData[day] && tasksData[day].length > 0) {
+    tasksData[day].forEach(task => {
+      const taskElement = document.createElement('div');
+      taskElement.className = 'task-item';
+      taskElement.innerHTML = `
+        <span>${task.text}</span>
+        <button class="remove-task" onclick="removeTask('${day}', ${task.id})">×</button>
+      `;
+      container.appendChild(taskElement);
+    });
+  }
 }
 
-// Save data
-function saveData() {
-  // Update current project
-  tasksData.currentProject = document.getElementById('current-project').value;
-  
-  // Save to storage
-  chrome.storage.local.set({tasksData: tasksData}, function() {
+// Save data (mainly for the save button feedback)
+async function saveData() {
+  try {
+    // Save current project
+    const projectName = document.getElementById('current-project').value;
+    await window.taskDB.saveProject(projectName);
+    tasksData.currentProject = projectName;
+    
     console.log('Data saved successfully');
     
     // Visual feedback
@@ -133,10 +229,42 @@ function saveData() {
     saveBtn.textContent = 'Saved!';
     saveBtn.style.background = 'linear-gradient(135deg, #2ed573, #1e90ff)';
     
+    // Notify other tabs
+    notifyTabsOfChange();
+    
     setTimeout(() => {
       saveBtn.textContent = originalText;
       saveBtn.style.background = 'linear-gradient(135deg, #4ecdc4, #44a08d)';
       window.close();
     }, 1000);
+  } catch (error) {
+    console.error('Error saving data:', error);
+    
+    // Fallback to Chrome storage
+    chrome.storage.local.set({tasksData: tasksData}, function() {
+      console.log('Data saved to Chrome storage as fallback');
+      
+      const saveBtn = document.getElementById('save-btn');
+      const originalText = saveBtn.textContent;
+      saveBtn.textContent = 'Saved!';
+      saveBtn.style.background = 'linear-gradient(135deg, #2ed573, #1e90ff)';
+      
+      setTimeout(() => {
+        saveBtn.textContent = originalText;
+        saveBtn.style.background = 'linear-gradient(135deg, #4ecdc4, #44a08d)';
+        window.close();
+      }, 1000);
+    });
+  }
+}
+
+// Notify other tabs of changes
+function notifyTabsOfChange() {
+  // Use Chrome messaging to notify new tab
+  chrome.runtime.sendMessage({
+    type: 'TASKS_UPDATED',
+    data: tasksData
+  }).catch(() => {
+    // Ignore errors if no listeners
   });
 }
