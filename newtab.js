@@ -281,6 +281,9 @@ function initializeNewTabModule() {
       const timeDiv = document.createElement('div');
       timeDiv.className = `task-time ${timeClass}`;
       timeDiv.textContent = task.time || '--:--';
+      timeDiv.setAttribute('contenteditable', 'true');
+      timeDiv.setAttribute('data-day', day);
+      timeDiv.setAttribute('data-task-id', task.id);
       taskElement.appendChild(timeDiv);
       
       const contentDiv = document.createElement('div');
@@ -288,6 +291,9 @@ function initializeNewTabModule() {
       const textDiv = document.createElement('div');
       textDiv.className = 'task-text';
       textDiv.textContent = task.text;
+      textDiv.setAttribute('contenteditable', 'true');
+      textDiv.setAttribute('data-day', day);
+      textDiv.setAttribute('data-task-id', task.id);
       contentDiv.appendChild(textDiv);
 
       const deleteButton = document.createElement('i');
@@ -376,6 +382,45 @@ function initializeNewTabModule() {
         }
       }
     });
+
+    document.addEventListener('focusout', function(e) {
+      if (e.target.classList.contains('task-time') || e.target.classList.contains('task-text')) {
+        const day = e.target.getAttribute('data-day');
+        const taskId = parseInt(e.target.getAttribute('data-task-id'));
+        const taskElement = e.target.closest('.task-item');
+        const newTime = taskElement.querySelector('.task-time').textContent;
+        const newText = taskElement.querySelector('.task-text').textContent;
+
+        updateTaskContent(day, taskId, newTime, newText);
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.target.classList.contains('task-time') || e.target.classList.contains('task-text'))) {
+            e.preventDefault();
+            e.target.blur();
+        }
+    });
+  }
+
+  // Update task content
+  async function updateTaskContent(day, taskId, newTime, newText) {
+    try {
+      const task = tasksData[day].find(t => t.id === taskId);
+      if (task && (task.time !== newTime || task.text !== newText)) {
+        task.time = newTime;
+        task.text = newText;
+
+        await window.taskDB.updateTask(taskId, { time: newTime, text: newText });
+
+        // Re-sort and re-render
+        displayDayTasks(day, day === 'afterTomorrow' ? 'after-tomorrow-tasks' : `${day}-tasks`);
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+      // Reload data to stay in sync if update fails
+      await loadTasksData();
+    }
   }
 
   // Delete a task
