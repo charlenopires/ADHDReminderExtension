@@ -29,6 +29,9 @@ A modern, beautiful Chrome extension designed specifically for people with ADHD 
 - **IndexedDB Storage**: Advanced local database storage for better performance
 - **Real-time Sync**: Changes sync between popup and new tab instantly
 - **Offline Support**: Works completely offline with local data storage
+- **Keyboard Shortcuts**: Quick access with customizable hotkeys
+- **Settings Page**: Customize your experience with advanced options
+- **Data Export/Import**: Backup and restore your tasks and projects
 
 ## 📸 Screenshots
 
@@ -78,30 +81,53 @@ Every new tab shows your organized tasks:
 - **Use Colors**: The color coding helps with visual organization
 - **Check Regularly**: New tabs will remind you of your tasks
 - **Update Daily**: Review and update your tasks each morning
+- **Use Shortcuts**: Learn the keyboard shortcuts for faster access
+- **Customize Settings**: Adjust privacy and auto-save options to your needs
+
+### ⌨️ Keyboard Shortcuts
+- **Ctrl+Shift+T** (Cmd+Shift+T on Mac): Open task manager popup
+- **Ctrl+Shift+P** (Cmd+Shift+P on Mac): Toggle project visibility in new tabs
+
+### ⚙️ Advanced Features
+- **Settings Page**: Right-click the extension icon → Options
+- **Data Export**: Backup your tasks and projects as JSON
+- **Data Import**: Restore from backup files
+- **Auto-cleanup**: Automatically remove old completed tasks
+- **Privacy Mode**: Hide project names by default
+- **Context Menu**: Right-click selected text to add as task
 
 ## 🛠️ Technical Details
 
 ### Built With
+- **Manifest V3** - Latest Chrome extension standard
+- **Service Worker** - Background processing and lifecycle management
 - **HTML5** - Structure and layout
 - **CSS3** - Modern styling with gradients and animations
 - **JavaScript** - Task management and Chrome API integration
 - **IndexedDB** - Advanced client-side database for task storage
-- **Chrome Extension API** - Storage and new tab override
+- **Chrome Extension API** - Storage, commands, and new tab override
 - **Font Awesome** - Beautiful icons
 - **Inter Font** - Clean, readable typography
 
 ### File Structure
 ```
-├── manifest.json          # Extension configuration
+├── manifest.json          # Extension configuration (Manifest V3)
+├── background.js          # Service worker for background tasks
 ├── db.js                  # IndexedDB database manager
 ├── popup.html             # Popup interface
 ├── popup.js              # Popup functionality
 ├── newtab.html           # New tab dashboard
 ├── newtab.js             # New tab functionality
-├── icons/                # Extension icons
+├── options.html          # Settings page
+├── options.js            # Settings functionality
+├── icons/                # Extension icons (multiple sizes)
 │   ├── reminder-icon16.png
+│   ├── reminder-icon24.png
+│   ├── reminder-icon32.png
 │   ├── reminder-icon48.png
-│   └── reminder-icon128.png
+│   ├── reminder-icon96.png
+│   ├── reminder-icon128.png
+│   └── reminder-icon256.png
 └── README.md             # This file
 ```
 
@@ -109,6 +135,8 @@ Every new tab shows your organized tasks:
 - **Storage**: To save your tasks and project data locally (fallback)
 - **IndexedDB**: Advanced local database for better performance and reliability
 - **New Tab Override**: To display your tasks on new tabs
+- **Background**: Service worker for cross-tab communication and cleanup
+- **Commands**: Keyboard shortcuts for quick access
 
 ## 🎨 Design Philosophy
 

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ADHD Task Manager - Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      color: #ffffff;
+      padding: 40px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      color: #888;
+      font-size: 1.1rem;
+    }
+
+    .settings-section {
+      background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .setting-item:last-child {
+      border-bottom: none;
+    }
+
+    .setting-info h3 {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    .setting-info p {
+      font-size: 0.9rem;
+      color: #888;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 24px;
+      background: #333;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .toggle-switch.active {
+      background: #4ecdc4;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .toggle-switch.active::after {
+      transform: translateX(26px);
+    }
+
+    .button {
+      background: linear-gradient(135deg, #4ecdc4, #44a08d);
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+    }
+
+    .button.secondary {
+      background: #333;
+      border: 1px solid #444;
+    }
+
+    .button.secondary:hover {
+      background: #444;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .version-info {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      color: #666;
+    }
+
+    .keyboard-shortcuts {
+      margin-top: 20px;
+    }
+
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .shortcut-item:last-child {
+      border-bottom: none;
+    }
+
+    .shortcut-key {
+      background: #333;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    .status-message {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.3s ease;
+    }
+
+    .status-message.success {
+      background: #2ed573;
+      color: white;
+    }
+
+    .status-message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>ADHD Task Manager</h1>
+      <p>Customize your task management experience</p>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">General Settings</div>
+      
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Auto-save</h3>
+          <p>Automatically save changes as you type</p>
+        </div>
+        <div class="toggle-switch" id="auto-save-toggle"></div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Project Privacy</h3>
+          <p>Hide project name by default in new tabs</p>
+        </div>
+        <div class="toggle-switch" id="project-privacy-toggle"></div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Notifications</h3>
+          <p>Show browser notifications for reminders</p>
+        </div>
+        <div class="toggle-switch" id="notifications-toggle"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">Data Management</div>
+      
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Clean up old tasks</h3>
+          <p>Remove completed tasks older than 30 days</p>
+        </div>
+        <button class="button secondary" id="cleanup-btn">Clean Now</button>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Export data</h3>
+          <p>Download your tasks and projects as JSON</p>
+        </div>
+        <button class="button secondary" id="export-btn">Export</button>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h3>Import data</h3>
+          <p>Restore tasks and projects from backup</p>
+        </div>
+        <button class="button secondary" id="import-btn">Import</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">Keyboard Shortcuts</div>
+      <div class="keyboard-shortcuts">
+        <div class="shortcut-item">
+          <span>Open Task Manager</span>
+          <span class="shortcut-key">Ctrl+Shift+T</span>
+        </div>
+        <div class="shortcut-item">
+          <span>Toggle Project Visibility</span>
+          <span class="shortcut-key">Ctrl+Shift+P</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="version-info">
+      <p>ADHD Task Manager v2.0.0</p>
+      <p>Made with ❤️ for the ADHD community</p>
+    </div>
+  </div>
+
+  <div class="status-message" id="status-message"></div>
+
+  <script src="options.js"></script>
+</body>
+</html>

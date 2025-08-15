@@ -27,24 +27,21 @@
         height: 100vh;
         padding: 20px;
         overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 20px;
       }
 
       .container {
-        max-width: 1400px;
-        margin: 0 auto;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
+        display: contents;
       }
 
       .header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 30px;
         position: relative;
+        min-height: 80px;
       }
 
       .toggle-container {
@@ -93,6 +90,9 @@
         margin-right: 20px;
         backdrop-filter: blur(10px);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
       }
 
       .current-project::before {
