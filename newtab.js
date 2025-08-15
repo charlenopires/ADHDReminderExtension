@@ -289,6 +289,13 @@ function initializeNewTabModule() {
       textDiv.className = 'task-text';
       textDiv.textContent = task.text;
       contentDiv.appendChild(textDiv);
+
+      const deleteButton = document.createElement('i');
+      deleteButton.className = 'fas fa-trash-alt task-delete-button';
+      deleteButton.setAttribute('data-day', day);
+      deleteButton.setAttribute('data-task-id', task.id);
+      contentDiv.appendChild(deleteButton);
+
       taskElement.appendChild(contentDiv);
       
       // Add animation with delay
@@ -357,6 +364,36 @@ function initializeNewTabModule() {
         toggleTaskCompletion(day, taskId);
       }
     });
+
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('task-delete-button')) {
+        const day = e.target.getAttribute('data-day');
+        const taskId = parseInt(e.target.getAttribute('data-task-id'));
+        
+        // Confirmation before deleting
+        if (confirm('Are you sure you want to delete this task?')) {
+          deleteTask(day, taskId);
+        }
+      }
+    });
+  }
+
+  // Delete a task
+  async function deleteTask(day, taskId) {
+    try {
+      // Remove from local data
+      tasksData[day] = tasksData[day].filter(t => t.id !== taskId);
+      
+      // Remove from IndexedDB
+      await window.taskDB.deleteTask(taskId);
+      
+      // Re-render tasks for the day
+      displayDayTasks(day, day === 'afterTomorrow' ? 'after-tomorrow-tasks' : `${day}-tasks`);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      // If deletion fails, reload data to stay in sync
+      await loadTasksData();
+    }
   }
 
   // Refresh data periodically to stay in sync

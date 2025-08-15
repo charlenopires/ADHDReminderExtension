@@ -301,6 +301,8 @@ class TaskDB {
         const now = new Date();
         const movedTasks = [];
 
+        console.log(`[${now.toLocaleTimeString()}] Checking for overdue tasks... Found ${todayTasks.length} tasks for today.`);
+
         for (const task of todayTasks) {
           if (!task.completed && task.time) {
             const [hours, minutes] = task.time.split(':');
@@ -309,14 +311,16 @@ class TaskDB {
 
             // If task time has passed and it's not completed, move to tomorrow
             if (now > taskTime) {
-              // Update task to tomorrow
+              console.log(`Task "${task.text}" at ${task.time} is overdue. Moving to tomorrow.`);
               await this.updateTask(task.id, { day: 'tomorrow' });
               movedTasks.push(task);
             }
           }
         }
 
-        console.log(`Moved ${movedTasks.length} overdue tasks to tomorrow`);
+        if (movedTasks.length > 0) {
+            console.log(`Moved ${movedTasks.length} overdue tasks to tomorrow`);
+        }
         resolve(movedTasks);
       } catch (error) {
         console.error('Error moving overdue tasks:', error);

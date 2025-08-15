@@ -505,6 +505,19 @@ function renderTasks(day) {
 // Save data (mainly for the save button feedback)
 async function saveData() {
   try {
+    // Save any pending tasks from input fields
+    const days = ['today', 'tomorrow', 'afterTomorrow'];
+    for (const day of days) {
+      const taskInputId = day === 'afterTomorrow' ? 'after-tomorrow-task-input' : `${day}-task-input`;
+      const taskInput = document.getElementById(taskInputId);
+      const timeInputId = day === 'afterTomorrow' ? 'after-tomorrow-time-input' : `${day}-time-input`;
+      const timeInput = document.getElementById(timeInputId);
+
+      if (taskInput && taskInput.value.trim() && timeInput && timeInput.value) {
+        await addTask(day);
+      }
+    }
+
     // Save current project
     const projectName = document.getElementById('current-project').value;
     await window.taskDB.saveProject(projectName);
@@ -519,7 +532,7 @@ async function saveData() {
     saveBtn.style.background = 'linear-gradient(135deg, #2ed573, #1e90ff)';
     
     // Notify other tabs
-    notifyTabsOfChange();
+    await notifyTabsOfChange();
     
     setTimeout(() => {
       saveBtn.textContent = originalText;
