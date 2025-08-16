@@ -45,11 +45,13 @@ function initializeNewTabModule() {
       // Initialize database
       await window.taskDB.init();
       
+      
       // Setup UI and load data
       setupDateLabels();
       await loadTasksData();
       setupToggler();
       setupMessageListener();
+      setupDropZones(); // Adicionar esta linha
     } catch (error) {
       console.error('Failed to initialize new tab:', error);
       // Fallback to Chrome storage
@@ -57,6 +59,7 @@ function initializeNewTabModule() {
       loadTasksDataFromChromeStorage();
       setupToggler();
       setupMessageListener();
+      setupDropZones(); // Adicionar esta linha também no fallback
     }
   }
 
@@ -270,6 +273,15 @@ function initializeNewTabModule() {
       
       taskElement.className = `task-item ${dayClass}${completedClass}`;
       
+      // Adicionar atributos de drag and drop
+      taskElement.draggable = true;
+      taskElement.setAttribute('data-task-id', task.id);
+      taskElement.setAttribute('data-current-day', day);
+      
+      // Eventos de drag
+      taskElement.addEventListener('dragstart', handleDragStart);
+      taskElement.addEventListener('dragend', handleDragEnd);
+      
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.className = 'task-checkbox';
@@ -295,13 +307,13 @@ function initializeNewTabModule() {
       textDiv.setAttribute('data-day', day);
       textDiv.setAttribute('data-task-id', task.id);
       contentDiv.appendChild(textDiv);
-
+  
       const deleteButton = document.createElement('i');
       deleteButton.className = 'fas fa-trash-alt task-delete-button';
       deleteButton.setAttribute('data-day', day);
       deleteButton.setAttribute('data-task-id', task.id);
       contentDiv.appendChild(deleteButton);
-
+  
       taskElement.appendChild(contentDiv);
       
       // Add animation with delay
@@ -527,6 +539,119 @@ function initializeNewTabModule() {
     checkAndMoveOverdueTasks();
     checkEndOfDay();
   }, 5000);
+
+  // Variáveis para drag and drop
+  let draggedElement = null;
+  let draggedTaskId = null;
+  let draggedFromDay = null;
+
+  // Função para lidar com o início do arraste
+  function handleDragStart(e) {
+    draggedElement = e.target;
+    draggedTaskId = e.target.dataset.taskId;
+    draggedFromDay = e.target.dataset.day;
+    
+    e.target.style.opacity = '0.5';
+    e.target.classList.add('dragging'); // Adicionar classe visual
+    
+    // Adicionar classe visual às zonas de drop
+    document.querySelectorAll('.day-column').forEach(column => {
+      column.classList.add('drag-active');
+    });
+  }
+
+  // Função para lidar com o fim do arraste
+  function handleDragEnd(e) {
+    e.target.style.opacity = '1';
+    e.target.classList.remove('dragging'); // Remover classe visual
+    draggedElement = null;
+    draggedTaskId = null;
+    draggedFromDay = null;
+    
+    // Remover classe visual das zonas de drop
+    document.querySelectorAll('.day-column').forEach(column => {
+      column.classList.remove('drag-active', 'drag-over');
+    });
+  }
+
+  // Função para lidar com o arraste sobre uma zona válida
+  function handleDragOver(e) {
+    e.preventDefault();
+  }
+
+  // Função para lidar com a entrada em uma zona de drop
+  function handleDragEnter(e) {
+    e.target.closest('.day-column')?.classList.add('drag-over');
+  }
+
+  // Função para lidar com a saída de uma zona de drop
+  function handleDragLeave(e) {
+    e.target.closest('.day-column')?.classList.remove('drag-over');
+  }
+
+  // Função para lidar com o drop
+  async function handleDrop(e) {
+    e.preventDefault();
+    
+    const dropZone = e.target.closest('.day-column');
+    if (!dropZone || !draggedTaskId) return;
+    
+    // Determinar o dia de destino baseado na classe da coluna
+    let targetDay;
+    if (dropZone.classList.contains('today')) {
+      targetDay = 'today';
+    } else if (dropZone.classList.contains('tomorrow')) {
+      targetDay = 'tomorrow';
+    } else if (dropZone.classList.contains('after-tomorrow')) {
+      targetDay = 'afterTomorrow';
+    }
+    
+    // Se o dia de destino é o mesmo, não fazer nada
+    if (targetDay === draggedFromDay) {
+      return;
+    }
+    
+    try {
+      // Atualizar no IndexedDB
+      await window.taskDB.updateTask(parseInt(draggedTaskId), { day: targetDay });
+      
+      // Atualizar dados locais
+      const taskIndex = tasksData[draggedFromDay].findIndex(t => t.id == draggedTaskId);
+      if (taskIndex !== -1) {
+        const task = tasksData[draggedFromDay].splice(taskIndex, 1)[0];
+        task.day = targetDay;
+        tasksData[targetDay].push(task);
+      }
+      
+      // Re-renderizar ambos os dias
+      const dayContainerMap = {
+        'today': 'today-tasks',
+        'tomorrow': 'tomorrow-tasks',
+        'afterTomorrow': 'after-tomorrow-tasks'
+      };
+      
+      displayDayTasks(draggedFromDay, dayContainerMap[draggedFromDay]);
+      displayDayTasks(targetDay, dayContainerMap[targetDay]);
+      
+      console.log(`Tarefa ${draggedTaskId} movida de ${draggedFromDay} para ${targetDay}`);
+      
+    } catch (error) {
+      console.error('Erro ao mover tarefa:', error);
+      // Recarregar dados em caso de erro
+      await loadTasksData();
+    }
+  }
+
+  // Função para configurar as zonas de drop
+  function setupDropZones() {
+    const dropZones = document.querySelectorAll('.day-column');
+    dropZones.forEach(zone => {
+      zone.addEventListener('dragover', handleDragOver);
+      zone.addEventListener('dragenter', handleDragEnter);
+      zone.addEventListener('dragleave', handleDragLeave);
+      zone.addEventListener('drop', handleDrop);
+    });
+  }
 }
 
 // Initialize when DOM is ready

@@ -332,43 +332,54 @@ class TaskDB {
   // Move all incomplete tasks to next day (end of day cleanup)
   async moveIncompleteTasksToNextDay() {
     if (!this.db) await this.init();
-
+  
     return new Promise(async (resolve, reject) => {
       try {
+        console.log('Starting daily task rollover...');
+        
+        // Get all tasks for all days
         const todayTasks = await this.getTasksForDay('today');
         const tomorrowTasks = await this.getTasksForDay('tomorrow');
         const afterTomorrowTasks = await this.getTasksForDay('afterTomorrow');
         
         const movedTasks = [];
-
-        // Move today's incomplete tasks to tomorrow
+        const deletedTasks = [];
+  
+        // 1. Delete completed tasks from today (they're done, no need to keep)
+        for (const task of todayTasks) {
+          if (task.completed) {
+            await this.deleteTask(task.id);
+            deletedTasks.push({ task, reason: 'completed_today' });
+          }
+        }
+  
+        // 2. Move incomplete tasks from today to tomorrow (they become overdue)
         for (const task of todayTasks) {
           if (!task.completed) {
             await this.updateTask(task.id, { day: 'tomorrow' });
-            movedTasks.push({ from: 'today', to: 'tomorrow', task });
+            movedTasks.push({ from: 'today', to: 'tomorrow', task, reason: 'incomplete_rollover' });
           }
         }
-
-        // Move tomorrow's incomplete tasks to after tomorrow
+  
+        // 3. Move all tasks from tomorrow to today (tomorrow becomes today)
         for (const task of tomorrowTasks) {
-          if (!task.completed) {
-            await this.updateTask(task.id, { day: 'afterTomorrow' });
-            movedTasks.push({ from: 'tomorrow', to: 'afterTomorrow', task });
-          }
+          await this.updateTask(task.id, { day: 'today' });
+          movedTasks.push({ from: 'tomorrow', to: 'today', task, reason: 'daily_advance' });
         }
-
-        // Remove after tomorrow's incomplete tasks (or move to a "backlog")
+  
+        // 4. Move all tasks from afterTomorrow to tomorrow (day after tomorrow becomes tomorrow)
         for (const task of afterTomorrowTasks) {
-          if (!task.completed) {
-            // For now, we'll keep them in afterTomorrow
-            // In a future version, we could move to a "backlog" day
-          }
+          await this.updateTask(task.id, { day: 'tomorrow' });
+          movedTasks.push({ from: 'afterTomorrow', to: 'tomorrow', task, reason: 'daily_advance' });
         }
-
-        console.log(`Moved ${movedTasks.length} incomplete tasks to next day`);
-        resolve(movedTasks);
+  
+        console.log(`Daily rollover complete:`);
+        console.log(`- Deleted ${deletedTasks.length} completed tasks`);
+        console.log(`- Moved ${movedTasks.length} tasks between days`);
+        
+        resolve({ movedTasks, deletedTasks });
       } catch (error) {
-        console.error('Error moving incomplete tasks:', error);
+        console.error('Error in daily task rollover:', error);
         reject(error);
       }
     });
