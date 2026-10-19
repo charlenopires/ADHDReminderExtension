@@ -1,0 +1,76 @@
+/*
+ * Extreminder design tokens
+ * Paleta: escala de 12 passos no estilo Radix Colors (slate dark como base
+ * neutra, cyan/violet como acento) e tipografia Geist / Geist Mono.
+ * Passo 1–2: fundos · 3–5: superfícies/interação · 6–8: bordas · 9–10: sólidos · 11–12: texto.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Neutros (slate dark) */
+  --gray-1: #0b0c0f;
+  --gray-2: #111317;
+  --gray-3: #181a1f;
+  --gray-4: #1f2228;
+  --gray-5: #262a31;
+  --gray-6: #2f343c;
+  --gray-7: #3c424b;
+  --gray-8: #545b66;
+  --gray-9: #6b7280;
+  --gray-10: #7b8290;
+  --gray-11: #b0b5be;
+  --gray-12: #edeef0;
+
+  /* Acentos */
+  --cyan-9: #22d3ee;
+  --cyan-11: #67e8f9;
+  --violet-9: #8b5cf6;
+  --violet-11: #c4b5fd;
+  --green-9: #2dd4a7;
+
+  /* Prioridade: quanto mais alta, mais quente */
+  --heat-high: #ff3b47;
+  --heat-high-2: #ff7a45;
+  --heat-medium: #ff9f1c;
+  --heat-medium-2: #ffc53d;
+  --heat-low: #3b9eff;
+  --heat-low-2: #22d3ee;
+
+  /* Semânticos */
+  --bg: var(--gray-1);
+  --surface: color-mix(in oklab, var(--gray-2) 82%, transparent);
+  --surface-raised: var(--gray-3);
+  --surface-hover: var(--gray-4);
+  --border: var(--gray-5);
+  --border-strong: var(--gray-6);
+  --text: var(--gray-12);
+  --text-muted: var(--gray-11);
+  --text-faint: var(--gray-9);
+  --accent: var(--cyan-9);
+  --accent-2: var(--violet-9);
+  --accent-gradient: linear-gradient(135deg, var(--cyan-9), var(--violet-9));
+  --focus-ring: 0 0 0 2px var(--gray-1), 0 0 0 4px color-mix(in oklab, var(--cyan-9) 70%, transparent);
+
+  /* Tipografia */
+  --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+
+  /* Espaço, raio, sombra, movimento */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+  --shadow-lg: 0 24px 48px -12px rgb(0 0 0 / 0.6), 0 0 0 1px var(--border);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur: 160ms;
+}

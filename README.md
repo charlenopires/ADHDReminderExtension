@@ -1,214 +1,47 @@
-# ADHD Reminder Chrome Extension
+# Extreminder
 
-A modern, beautiful Chrome extension designed specifically for people with ADHD to help manage tasks and stay organized. Features a clean dark interface with colorful accents and an intuitive task management system.
+Extensão do Chrome (Manifest V3) que mostra, em cada nova aba, o **projeto em foco** e as tarefas de **hoje e dos próximos 2 dias**, com a **fase da lua** de cada dia. Tudo começa **oculto e cifrado**.
 
-## 🌟 Features
+## Recursos
 
-### ✨ **Modern Dark UI**
-- Beautiful dark theme with gradient accents
-- Smooth animations and hover effects
-- Responsive design that works on all screen sizes
-- Clean, distraction-free interface
+- **Nova aba**: projeto no topo, 3 colunas (Hoje, Amanhã, +2) com fase da lua e % de iluminação, contagem de pendentes e de alta prioridade. Cabe na tela sem rolagem e vira coluna única em telas estreitas.
+- **Privacidade**: o conteúdo começa oculto. O botão do olho pede o **código de acesso** e então revela projeto e tarefas. Clicar de novo oculta. A aba se tranca sozinha depois de 2 min em segundo plano.
+- **Virada de dia automática**: tarefa não concluída no seu dia passa para o dia seguinte e ganha um selo `↻ Nd` com quantos dias foi adiada. Tarefas concluídas ficam guardadas por 30 dias.
+- **Prioridades com escala de calor**: Alta (vermelho), Média (laranja), Baixa (azul frio).
+- **Drag and drop**: reordene dentro do dia ou arraste para outro dia (colunas na nova aba, abas de dia no popup). "Ordenar por prioridade" reorganiza o dia.
+- **Classificadores**: crie os seus (ex.: IFPI, Pessoal, Startup), com cor, e aplique às tarefas.
+- **Popup** (`Ctrl/Cmd+Shift+U`): projeto, adicionar tarefas com prioridade e classificador, editar com duplo clique, backup em JSON.
 
-### 📋 **Task Management**
-- **Current Project**: Keep track of your main focus
-- **3-Day Planning**: Organize tasks for Today, Tomorrow, and Day After Tomorrow
-- **Quick Add**: Add tasks with Enter key or click
-- **Easy Remove**: Delete tasks with a single click
-- **Auto-Save**: Your data is automatically saved
+## Segurança
 
-### 🎯 **ADHD-Friendly Design**
-- **Visual Organization**: Color-coded sections for easy recognition
-- **Timeline View**: Visual timeline with colored dots for each task
-- **Privacy Mode**: Hide/show project name with eye toggle
-- **Minimal Distractions**: Clean interface keeps you focused
+- O código de acesso **não fica no código-fonte em texto puro**. Só existe um verificador PBKDF2-SHA256 (310k iterações, com salt).
+- Projeto, tarefas e classificadores ficam **cifrados com AES-GCM** em `chrome.storage.local`. A chave é derivada do código de acesso com outro salt.
+- O popup lembra o desbloqueio por 15 min de inatividade, só na memória do navegador (`chrome.storage.session`). A nova aba sempre começa trancada.
+- Os dados da versão antiga (IndexedDB e `tasksData`) são migrados para o cofre cifrado no primeiro desbloqueio e depois apagados.
+- Permissões mínimas: só `storage`.
 
-### 🔄 **Smart Integration**
-- **New Tab Override**: See your tasks every time you open a new tab
-- **Popup Access**: Quick access via extension icon
-- **IndexedDB Storage**: Advanced local database storage for better performance
-- **Real-time Sync**: Changes sync between popup and new tab instantly
-- **Offline Support**: Works completely offline with local data storage
-- **Keyboard Shortcuts**: Quick access with customizable hotkeys
-- **Settings Page**: Customize your experience with advanced options
-- **Data Export/Import**: Backup and restore your tasks and projects
+## Design
 
-## 📸 Screenshots
+- Paleta dark em escala de 12 passos no estilo Radix Colors (slate como base, cyan/violet como acentos). Os tokens ficam em `styles/tokens.css`.
+- Tipografia: Geist e Geist Mono.
+- Ícones SVG inline (`lib/icons.js`). Os ícones da extensão são gerados a partir de `icons/icon.svg` e `icons/icon-small.svg`:
 
-### Popup Interface
-The extension popup provides a compact interface for managing your tasks:
-- Current project input at the top
-- Three sections for different days
-- Color-coded icons for easy identification
-- Quick add buttons and task removal
-
-### New Tab Dashboard
-Every new tab shows your organized tasks:
-- Prominent current project display with privacy toggle
-- Three-column layout for different days
-- Beautiful timeline visualization
-- Hover effects and smooth animations
-
-## 🚀 Installation
-
-### From Chrome Web Store
-*Coming soon - extension will be available on the Chrome Web Store*
-
-### Manual Installation (Developer Mode)
-1. Download or clone this repository
-2. Open Chrome and go to `chrome://extensions/`
-3. Enable "Developer mode" in the top right
-4. Click "Load unpacked" and select the extension folder
-5. The extension will appear in your toolbar
-
-## 💡 How to Use
-
-### Getting Started
-1. Click the extension icon in your Chrome toolbar
-2. Enter your current project name
-3. Add tasks for today, tomorrow, and the day after tomorrow
-4. Click "Save All" to store your data
-
-### Managing Tasks
-- **Add Task**: Type in the input field and press Enter or click the + button
-- **Remove Task**: Click the × button next to any task
-- **View Tasks**: Open a new tab to see your organized task dashboard
-- **Hide Project**: Click the eye icon to hide/show your project name
-
-### Tips for ADHD Users
-- **Start Small**: Add just 2-3 tasks per day to avoid overwhelm
-- **Be Specific**: Write clear, actionable tasks
-- **Use Colors**: The color coding helps with visual organization
-- **Check Regularly**: New tabs will remind you of your tasks
-- **Update Daily**: Review and update your tasks each morning
-- **Use Shortcuts**: Learn the keyboard shortcuts for faster access
-- **Customize Settings**: Adjust privacy and auto-save options to your needs
-
-### ⌨️ Keyboard Shortcuts
-- **Ctrl+Shift+T** (Cmd+Shift+T on Mac): Open task manager popup
-- **Ctrl+Shift+P** (Cmd+Shift+P on Mac): Toggle project visibility in new tabs
-
-### ⚙️ Advanced Features
-- **Settings Page**: Right-click the extension icon → Options
-- **Data Export**: Backup your tasks and projects as JSON
-- **Data Import**: Restore from backup files
-- **Auto-cleanup**: Automatically remove old completed tasks
-- **Privacy Mode**: Hide project names by default
-- **Context Menu**: Right-click selected text to add as task
-
-## 🛠️ Technical Details
-
-### Built With
-- **Manifest V3** - Latest Chrome extension standard
-- **Service Worker** - Background processing and lifecycle management
-- **HTML5** - Structure and layout
-- **CSS3** - Modern styling with gradients and animations
-- **JavaScript** - Task management and Chrome API integration
-- **IndexedDB** - Advanced client-side database for task storage
-- **Chrome Extension API** - Storage, commands, and new tab override
-- **Font Awesome** - Beautiful icons
-- **Inter Font** - Clean, readable typography
-
-### File Structure
-```
-├── manifest.json          # Extension configuration (Manifest V3)
-├── background.js          # Service worker for background tasks
-├── db.js                  # IndexedDB database manager
-├── popup.html             # Popup interface
-├── popup.js              # Popup functionality
-├── newtab.html           # New tab dashboard
-├── newtab.js             # New tab functionality
-├── options.html          # Settings page
-├── options.js            # Settings functionality
-├── icons/                # Extension icons (multiple sizes)
-│   ├── reminder-icon16.png
-│   ├── reminder-icon24.png
-│   ├── reminder-icon32.png
-│   ├── reminder-icon48.png
-│   ├── reminder-icon96.png
-│   ├── reminder-icon128.png
-│   └── reminder-icon256.png
-└── README.md             # This file
+```bash
+rsvg-convert -w 128 -h 128 icons/icon.svg -o icons/icon128.png
 ```
 
-### Permissions
-- **Storage**: To save your tasks and project data locally (fallback)
-- **IndexedDB**: Advanced local database for better performance and reliability
-- **New Tab Override**: To display your tasks on new tabs
-- **Background**: Service worker for cross-tab communication and cleanup
-- **Commands**: Keyboard shortcuts for quick access
+## Instalação
 
-## 🎨 Design Philosophy
+1. Abra `chrome://extensions` e ative o **Modo do desenvolvedor**.
+2. Clique em **Carregar sem compactação** e selecione esta pasta.
 
-This extension was designed with ADHD users in mind:
+## Estrutura
 
-- **Reduced Cognitive Load**: Simple, clear interface without clutter
-- **Visual Hierarchy**: Color coding and typography guide attention
-- **Immediate Feedback**: Smooth animations provide satisfying interactions
-- **Consistent Layout**: Familiar patterns reduce mental effort
-- **Privacy Conscious**: Option to hide sensitive project information
-
-## 🔧 Customization
-
-The extension uses CSS custom properties for easy theming. Key colors:
-- **Primary**: `#4ecdc4` (Teal)
-- **Secondary**: `#45b7d1` (Blue)
-- **Accent**: `#96ceb4` (Green)
-- **Warning**: `#ff6b6b` (Red)
-
-## 📱 Browser Compatibility
-
-- **Chrome**: Fully supported (Manifest V3)
-- **Edge**: Compatible with Chromium-based Edge
-- **Other Browsers**: May work with Chromium-based browsers
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-1. **Report Bugs**: Open an issue with details about the problem
-2. **Suggest Features**: Share ideas for ADHD-friendly improvements
-3. **Submit Pull Requests**: Fix bugs or add new features
-4. **Improve Documentation**: Help make the README clearer
-
-### Development Setup
-1. Clone the repository
-2. Make your changes
-3. Test in Chrome developer mode
-4. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Designed for the ADHD community
-- Inspired by modern task management principles
-- Built with accessibility and usability in mind
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-- Open an issue on GitHub
-- Check the troubleshooting section below
-
-### Troubleshooting
-
-**Tasks not saving?**
-- Make sure you click "Save All" in the popup
-- Check if Chrome storage permissions are enabled
-
-**New tab not showing tasks?**
-- Refresh the extension in chrome://extensions/
-- Make sure the extension is enabled
-
-**Interface looks broken?**
-- Try disabling other extensions that might conflict
-- Clear Chrome cache and reload the extension
-
----
-
-**Made with ❤️ for the ADHD community**
-
-*This extension aims to make task management easier and more enjoyable for people with ADHD. Your feedback helps us improve!*
+```
+manifest.json      background.js
+newtab.html/js     popup.html/js
+lib/  crypto.js (código + AES-GCM) · store.js (cofre, virada de dia, ordem)
+      moon.js (fase da lua) · ui.js (componentes, DnD, diálogo) · actions.js · icons.js
+styles/ tokens.css · app.css · newtab.css · popup.css
+icons/  icon.svg · icon-small.svg · PNGs 16/32/48/128
+```

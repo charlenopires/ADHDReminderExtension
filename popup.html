@@ -1,361 +1,93 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>ADHD Task Manager</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="icon" type="image/png" sizes="48x48" href="icons/adhd-task-icon48.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="icons/adhd-task-icon16.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Extreminder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/app.css" />
+    <link rel="stylesheet" href="styles/popup.css" />
+  </head>
+  <body>
+    <!-- Bloqueado -->
+    <section id="view-locked" class="view view-locked">
+      <div class="locked-brand" id="locked-logo"></div>
+      <h1>Extreminder</h1>
+      <p>Projeto e tarefas estão cifrados.<br />Digite o código de acesso para continuar.</p>
+      <button id="unlock" class="btn btn-primary"></button>
+    </section>
 
-    body {
-      width: 400px;
-      min-height: 600px;
-      background: #0a0a0a;
-      color: #ffffff;
-      font-family: 'Inter', sans-serif;
-      padding: 0;
-      overflow-x: hidden;
-    }
+    <!-- Principal -->
+    <section id="view-main" class="view" hidden>
+      <header class="bar">
+        <div class="bar-brand"><span id="bar-logo"></span><strong>Extreminder</strong></div>
+        <div class="bar-actions">
+          <button id="open-settings" class="icon-btn" aria-label="Classificadores e backup" title="Classificadores e backup"></button>
+          <button id="lock" class="icon-btn" aria-label="Trancar" title="Trancar"></button>
+        </div>
+      </header>
 
-    .header {
-      background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-      padding: 20px;
-      text-align: center;
-      border-bottom: 1px solid #333;
-    }
+      <label class="field project-field">
+        <span class="eyebrow">Projeto em foco</span>
+        <div class="project-input">
+          <span id="project-icon"></span>
+          <input id="project" class="input" maxlength="120" placeholder="No que você está focado?" autocomplete="off" />
+        </div>
+      </label>
 
-    .header h1 {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 5px;
-      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+      <nav id="day-tabs" class="day-tabs" role="tablist" aria-label="Dias"></nav>
 
-    .header p {
-      font-size: 12px;
-      color: #888;
-    }
+      <form id="add-form" class="add-form">
+        <input id="task-text" class="input" maxlength="200" placeholder="Nova tarefa…" autocomplete="off" required />
+        <div class="add-row">
+          <div class="prio-picker" role="radiogroup" aria-label="Prioridade">
+            <label class="prio-high"><input type="radio" name="priority" value="high" /><i></i>Alta</label>
+            <label class="prio-medium"><input type="radio" name="priority" value="medium" checked /><i></i>Média</label>
+            <label class="prio-low"><input type="radio" name="priority" value="low" /><i></i>Baixa</label>
+          </div>
+          <button type="button" id="tag-picker" class="tag-picker"></button>
+          <button type="submit" class="btn btn-primary add-btn" aria-label="Adicionar tarefa" id="add-btn"></button>
+        </div>
+      </form>
 
-    .container {
-      padding: 20px;
-    }
-
-    .section {
-      margin-bottom: 25px;
-    }
-
-    .section-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 12px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .section-icon {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-    }
-
-    .project-icon { background: #ff6b6b; }
-    .today-icon { background: #4ecdc4; }
-    .tomorrow-icon { background: #45b7d1; }
-    .after-icon { background: #96ceb4; }
-
-    .input-group {
-      margin-bottom: 15px;
-    }
-
-    input[type="text"], input[type="time"], textarea {
-      width: 100%;
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 12px;
-      color: #fff;
-      font-size: 14px;
-      font-family: 'Inter', sans-serif;
-      transition: all 0.3s ease;
-    }
-
-    input[type="text"]:focus, input[type="time"]:focus, textarea:focus {
-      outline: none;
-      border-color: #4ecdc4;
-      box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.1);
-    }
-
-    input[type="time"] {
-      width: 90px;
-      padding: 8px;
-      font-size: 12px;
-      color-scheme: dark;
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-      max-height: 120px;
-    }
-
-    .task-input {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .task-input input[type="text"] {
-      flex: 1;
-      margin-bottom: 0;
-    }
-
-    .task-input input[type="time"] {
-      margin-bottom: 0;
-    }
-
-    .add-task-btn {
-      background: #333;
-      border: 1px solid #444;
-      color: #fff;
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: all 0.3s ease;
-    }
-
-    .add-task-btn:hover {
-      background: #444;
-      border-color: #555;
-    }
-
-    .add-task-btn:disabled {
-      background: #222;
-      border-color: #333;
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    .task-list {
-      margin-top: 10px;
-    }
-
-    .task-item {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 6px;
-      padding: 8px 12px;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      font-size: 13px;
-      gap: 8px;
-      transition: all 0.3s ease;
-    }
-
-    .task-item.completed {
-      opacity: 0.6;
-      background: #111;
-    }
-
-    .task-item.completed .task-content {
-      text-decoration: line-through;
-      color: #666;
-    }
-
-    .task-checkbox {
-      width: 16px;
-      height: 16px;
-      border-radius: 3px;
-      border: 1px solid #555;
-      background: transparent;
-      cursor: pointer;
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    .task-checkbox:checked {
-      background: #4ecdc4;
-      border-color: #4ecdc4;
-    }
-
-    .task-checkbox:checked::after {
-      content: '✓';
-      position: absolute;
-      top: -2px;
-      left: 2px;
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .task-time {
-      font-size: 11px;
-      color: #888;
-      font-weight: 500;
-      min-width: 40px;
-      flex-shrink: 0;
-    }
-
-    .task-content {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .task-text {
-      flex: 1;
-    }
-
-    .task-overdue {
-      color: #ff6b6b;
-      font-weight: 500;
-    }
-
-    .remove-task {
-      background: #ff4757;
-      border: none;
-      color: white;
-      border-radius: 4px;
-      padding: 4px 8px;
-      cursor: pointer;
-      font-size: 11px;
-      transition: all 0.3s ease;
-    }
-
-    .remove-task:hover {
-      background: #ff3742;
-    }
-
-    .save-btn {
-      width: 100%;
-      background: linear-gradient(135deg, #4ecdc4, #44a08d);
-      border: none;
-      color: white;
-      padding: 15px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-top: 20px;
-    }
-
-    .save-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
-    }
-
-    .save-btn:active {
-      transform: translateY(0);
-    }
-
-    .day-label {
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 8px;
-    }
-
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #1a1a1a;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #333;
-      border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #444;
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>ADHD Task Manager</h1>
-    <p>Organize your project and tasks</p>
-  </div>
-
-  <div class="container">
-    <!-- Current Project -->
-    <div class="section">
-      <div class="section-title">
-        <div class="section-icon project-icon"></div>
-        Current Project
+      <div class="list-head">
+        <span id="list-count" class="eyebrow"></span>
+        <button id="sort-prio" class="link-btn"></button>
       </div>
-      <div class="input-group">
-        <input type="text" id="current-project" placeholder="Current project name...">
+      <div class="list-scroll">
+        <ul id="task-list" class="task-list"></ul>
       </div>
-    </div>
+    </section>
 
-    <!-- Today -->
-    <div class="section">
-      <div class="section-title">
-        <div class="section-icon today-icon"></div>
-        Today
-      </div>
-      <div class="day-label" id="today-date"></div>
-      <div class="task-input">
-        <input type="time" id="today-time-input" value="09:00">
-        <input type="text" id="today-task-input" placeholder="Add task for today...">
-        <button class="add-task-btn" id="today-add-btn" data-day="today">+</button>
-      </div>
-      <div class="task-list" id="today-tasks"></div>
-    </div>
+    <!-- Classificadores e backup -->
+    <section id="view-settings" class="view" hidden>
+      <header class="bar">
+        <button id="back" class="icon-btn" aria-label="Voltar"></button>
+        <strong class="bar-title">Classificadores</strong>
+        <span></span>
+      </header>
+      <p class="hint">Use classificadores para agrupar tarefas por contexto — ex.: IFPI, Pessoal, Startup.</p>
+      <form id="tag-form" class="tag-form">
+        <input id="tag-name" class="input" maxlength="24" placeholder="Nome do classificador" autocomplete="off" required />
+        <div id="tag-colors" class="tag-colors" role="radiogroup" aria-label="Cor"></div>
+        <button type="submit" class="btn btn-primary">Criar</button>
+      </form>
+      <ul id="tag-list" class="tag-list"></ul>
 
-    <!-- Tomorrow -->
-    <div class="section">
-      <div class="section-title">
-        <div class="section-icon tomorrow-icon"></div>
-        <span id="tomorrow-title">Tomorrow</span>
+      <div class="backup">
+        <span class="eyebrow">Backup</span>
+        <p class="hint">O arquivo exportado não é cifrado — guarde em local seguro.</p>
+        <div class="backup-actions">
+          <button id="export" class="btn btn-ghost"></button>
+          <button id="import" class="btn btn-ghost"></button>
+          <input id="import-file" type="file" accept="application/json" hidden />
+        </div>
       </div>
-      <div class="day-label" id="tomorrow-date"></div>
-      <div class="task-input">
-        <input type="time" id="tomorrow-time-input" value="09:00">
-        <input type="text" id="tomorrow-task-input" placeholder="Add task...">
-        <button class="add-task-btn" id="tomorrow-add-btn" data-day="tomorrow">+</button>
-      </div>
-      <div class="task-list" id="tomorrow-tasks"></div>
-    </div>
+    </section>
 
-    <!-- Day After Tomorrow -->
-    <div class="section">
-      <div class="section-title">
-        <div class="section-icon after-icon"></div>
-        <span id="after-tomorrow-title">Day After Tomorrow</span>
-      </div>
-      <div class="day-label" id="after-tomorrow-date"></div>
-      <div class="task-input">
-        <input type="time" id="after-tomorrow-time-input" value="09:00">
-        <input type="text" id="after-tomorrow-task-input" placeholder="Add task...">
-        <button class="add-task-btn" id="after-tomorrow-add-btn" data-day="afterTomorrow">+</button>
-      </div>
-      <div class="task-list" id="after-tomorrow-tasks"></div>
-    </div>
-
-    <button class="save-btn" id="save-btn">Save All</button>
-  </div>
-
-  <script src="db.js"></script>
-  <script src="popup.js"></script>
-</body>
+    <script type="module" src="popup.js"></script>
+  </body>
 </html>
