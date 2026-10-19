@@ -168,6 +168,19 @@ body {
   align-items: center;
 }
 
+.add-row .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-row .time-input {
+  flex: none;
+  width: 104px;
+  padding: 0 var(--space-2);
+  color: #ffe600;
+  font-weight: 600;
+}
+
 .prio-picker {
   display: flex;
   gap: 2px;
@@ -357,8 +370,35 @@ body {
   font-size: var(--text-sm);
 }
 
-.tag-count {
+.tag-name-input {
   flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 550;
+  outline: none;
+}
+
+.tag-name-input:hover {
+  border-color: var(--border);
+}
+
+.tag-name-input:focus {
+  border-color: color-mix(in oklab, var(--cyan-9) 50%, var(--border));
+  background: var(--gray-2);
+}
+
+.tag-row .color-dot {
+  flex: none;
+}
+
+.tag-count {
+  flex: none;
   font-size: var(--text-xs);
   color: var(--text-faint);
 }

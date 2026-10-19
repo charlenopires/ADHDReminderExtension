@@ -65,7 +65,7 @@ body {
 
 .project-name {
   margin: 0;
-  font-size: clamp(1.5rem, 1rem + 2.2vw, 2.6rem);
+  font-size: clamp(1.3rem, 0.9rem + 1.6vw, 2.1rem);
   font-weight: 650;
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -440,6 +440,23 @@ body.is-locked .eye-btn {
   background: none;
   border: 0;
   outline: none;
+}
+
+.quick-time {
+  flex: none;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--gray-2);
+  color: #ffe600;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  outline: none;
+}
+
+.quick-time:focus {
+  border-color: color-mix(in oklab, var(--cyan-9) 50%, var(--border));
 }
 
 .quick-input::placeholder {

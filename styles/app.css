@@ -161,6 +161,27 @@ button {
   opacity: 1;
 }
 
+/* Horário: amarelo vibrante */
+.chip-time {
+  --time: #ffe600;
+  color: var(--time);
+  background: color-mix(in oklab, var(--time) 14%, transparent);
+  border-color: color-mix(in oklab, var(--time) 35%, transparent);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-shadow: 0 0 10px color-mix(in oklab, var(--time) 45%, transparent);
+}
+
+.chip-time-input {
+  height: 22px;
+  border-color: var(--time);
+  outline: none;
+}
+
+.chip-time-input::-webkit-calendar-picker-indicator {
+  filter: invert(1) sepia(1) saturate(8) hue-rotate(5deg);
+}
+
 .chip-rolled {
   font-family: var(--font-mono);
   color: var(--heat-medium-2);
@@ -225,6 +246,23 @@ button {
   width: 3px;
   background: linear-gradient(180deg, var(--heat-2), var(--heat));
   box-shadow: 0 0 12px var(--heat);
+}
+
+/* Faixa de prioridade clicável (a cor lateral é a única indicação do nível). */
+.task-prio-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.task-prio-bar:hover,
+.task-prio-bar:focus-visible {
+  background: color-mix(in oklab, var(--heat) 35%, transparent);
 }
 
 .task.prio-high {

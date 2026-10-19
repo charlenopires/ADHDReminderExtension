@@ -1,6 +1,6 @@
 // Popup: adicionar/organizar tarefas, projeto e classificadores.
 import { icon, logo } from './lib/icons.js';
-import { Vault, dateKey, addDays, parseKey, tasksFor, addTask, moveTask, sortByPriority, tagById, TAG_COLORS } from './lib/store.js';
+import { Vault, dateKey, addDays, parseKey, tasksFor, addTask, moveTask, tagById, TAG_COLORS, TIME_RE } from './lib/store.js';
 import { $, esc, h, taskItem, bindTaskEvents, enableDnD, openMenu, askAccessCode, toast, weekdayLabel, dayMonthLabel } from './lib/ui.js';
 import { taskHandlers } from './lib/actions.js';
 
@@ -25,7 +25,6 @@ $('#open-settings').innerHTML = icon('settings', 17);
 $('#back').innerHTML = icon('arrowLeft', 17);
 $('#project-icon').innerHTML = icon('target', 16);
 $('#add-btn').innerHTML = icon('plus', 18);
-$('#sort-prio').innerHTML = `${icon('sort', 14)}Ordenar por prioridade`;
 $('#export').innerHTML = `${icon('download', 16)}Exportar`;
 $('#import').innerHTML = `${icon('upload', 16)}Importar`;
 
@@ -85,7 +84,8 @@ function renderTags() {
     ...state.tags.map((tag) => {
       const count = state.tasks.filter((t) => t.tagId === tag.id && !t.done).length;
       return h(`<li class="tag-row">
-          <span class="chip chip-tag" style="--tag:${esc(tag.color)}">${esc(tag.name)}</span>
+          <button type="button" class="color-dot" data-tag-color="${esc(tag.id)}" style="--tag:${esc(tag.color)}" title="Mudar cor" aria-label="Mudar cor de ${esc(tag.name)}"></button>
+          <input class="tag-name-input" data-tag-name="${esc(tag.id)}" value="${esc(tag.name)}" maxlength="24" autocomplete="off" spellcheck="false" aria-label="Nome do classificador" />
           <span class="mono tag-count">${count} ativa${count === 1 ? '' : 's'}</span>
           <button class="icon-btn" data-del-tag="${esc(tag.id)}" aria-label="Excluir ${esc(tag.name)}">${icon('trash', 15)}</button>
         </li>`);
@@ -138,11 +138,15 @@ $('#day-tabs').addEventListener('click', (e) => {
 $('#add-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const input = $('#task-text');
+  const timeInput = $('#task-time');
   const text = input.value.trim();
+  const time = timeInput.value;
   if (!text) return;
+  if (!TIME_RE.test(time)) return toast('Defina o horário (hora e minuto)'), timeInput.focus();
   const priority = e.target.priority.value;
   input.value = '';
-  mutate((s) => addTask(s, { text, date: selectedDate, priority, tagId: selectedTagId })).then(() => input.focus());
+  timeInput.value = '';
+  mutate((s) => addTask(s, { text, date: selectedDate, time, priority, tagId: selectedTagId })).then(() => input.focus());
 });
 
 $('#tag-picker').addEventListener('click', (e) => {
@@ -158,7 +162,6 @@ $('#tag-picker').addEventListener('click', (e) => {
   ]);
 });
 
-$('#sort-prio').addEventListener('click', () => mutate((s) => sortByPriority(s, selectedDate)));
 
 let projectTimer;
 $('#project').addEventListener('input', (e) => {
@@ -198,7 +201,55 @@ $('#tag-form').addEventListener('submit', (e) => {
   mutate((s) => s.tags.push({ id: crypto.randomUUID(), name, color }));
 });
 
+const COLOR_NAMES = {
+  '#22d3ee': 'Ciano',
+  '#8b5cf6': 'Violeta',
+  '#2dd4a7': 'Verde',
+  '#f472b6': 'Rosa',
+  '#facc15': 'Amarelo',
+  '#60a5fa': 'Azul',
+  '#fb923c': 'Laranja',
+  '#a3e635': 'Lima'
+};
+
+// Editar classificador: renomear no próprio campo, trocar cor pelo ponto.
+$('#tag-list').addEventListener('change', (e) => {
+  const input = e.target.closest('[data-tag-name]');
+  if (!input) return;
+  const id = input.dataset.tagName;
+  const name = input.value.trim();
+  const tag = tagById(state, id);
+  if (!tag) return;
+  if (!name) return (input.value = tag.name);
+  if (state.tags.some((t) => t.id !== id && t.name.toLowerCase() === name.toLowerCase())) {
+    input.value = tag.name;
+    return toast('Esse classificador já existe');
+  }
+  if (name !== tag.name) mutate((s) => (tagById(s, id).name = name)).then(renderTags);
+});
+
+$('#tag-list').addEventListener('keydown', (e) => {
+  const input = e.target.closest('[data-tag-name]');
+  if (!input) return;
+  if (e.key === 'Enter') input.blur();
+  if (e.key === 'Escape') (input.value = tagById(state, input.dataset.tagName)?.name || ''), input.blur();
+});
+
 $('#tag-list').addEventListener('click', (e) => {
+  const dot = e.target.closest('[data-tag-color]');
+  if (dot) {
+    const id = dot.dataset.tagColor;
+    const current = tagById(state, id)?.color;
+    return openMenu(
+      dot,
+      TAG_COLORS.map((color) => ({
+        label: COLOR_NAMES[color] || color,
+        swatch: color,
+        active: color === current,
+        onSelect: () => mutate((s) => (tagById(s, id).color = color)).then(renderTags)
+      }))
+    );
+  }
   const btn = e.target.closest('[data-del-tag]');
   if (!btn) return;
   const id = btn.dataset.delTag;

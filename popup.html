@@ -41,7 +41,10 @@
       <nav id="day-tabs" class="day-tabs" role="tablist" aria-label="Dias"></nav>
 
       <form id="add-form" class="add-form">
-        <input id="task-text" class="input" maxlength="200" placeholder="Nova tarefa…" autocomplete="off" required />
+        <div class="add-row">
+          <input id="task-text" class="input" maxlength="200" placeholder="Nova tarefa…" autocomplete="off" required />
+          <input id="task-time" class="input time-input mono" type="time" required aria-label="Horário (hora e minuto)" title="Horário (hora e minuto)" />
+        </div>
         <div class="add-row">
           <div class="prio-picker" role="radiogroup" aria-label="Prioridade">
             <label class="prio-high"><input type="radio" name="priority" value="high" /><i></i>Alta</label>
@@ -54,9 +57,7 @@
       </form>
 
       <div class="list-head">
-        <span id="list-count" class="eyebrow"></span>
-        <button id="sort-prio" class="link-btn"></button>
-      </div>
+        <span id="list-count" class="eyebrow"></span>      </div>
       <div class="list-scroll">
         <ul id="task-list" class="task-list"></ul>
       </div>

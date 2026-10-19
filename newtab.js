@@ -2,7 +2,7 @@
 // decifrado depois do código de acesso; ao trancar, o estado sai da memória.
 import { icon, logo } from './lib/icons.js';
 import { moonPhase, moonSVG } from './lib/moon.js';
-import { Vault, dateKey, addDays, parseKey, tasksFor, addTask, moveTask } from './lib/store.js';
+import { Vault, dateKey, addDays, parseKey, tasksFor, addTask, moveTask, TIME_RE } from './lib/store.js';
 import { taskHandlers } from './lib/actions.js';
 import { QUOTES } from './lib/quotes.js';
 import { CURRENCIES, getRates } from './lib/rates.js';
@@ -75,7 +75,7 @@ function renderDays() {
           ${state ? `<span class="mono">${pending} pendente${pending === 1 ? '' : 's'}</span>${hot ? `<span class="stat-hot">${icon('flame', 12)}${hot} alta${hot === 1 ? '' : 's'}</span>` : ''}` : '<span class="mono">— oculto —</span>'}
         </div>
         <div class="day-body"></div>
-        ${state ? `<form class="quick-add" data-date="${key}"><span>${icon('plus', 16)}</span><input class="quick-input" name="text" placeholder="Adicionar tarefa…" autocomplete="off" maxlength="200" /></form>` : ''}
+        ${state ? `<form class="quick-add" data-date="${key}"><span>${icon('plus', 16)}</span><input class="quick-input" name="text" placeholder="Adicionar tarefa…" autocomplete="off" maxlength="200" required /><input class="quick-time mono" name="time" type="time" required aria-label="Horário (hora e minuto)" title="Horário (hora e minuto)" /></form>` : ''}
       </section>`);
 
     const body = col.querySelector('.day-body');
@@ -187,9 +187,11 @@ daysEl.addEventListener('submit', (e) => {
   if (!form) return;
   e.preventDefault();
   const text = form.text.value.trim();
+  const time = form.time.value;
   if (!text) return;
+  if (!TIME_RE.test(time)) return form.time.focus();
   const date = form.dataset.date;
-  mutate((s) => addTask(s, { text, date, priority: 'medium' })).then(() => {
+  mutate((s) => addTask(s, { text, date, time, priority: 'medium' })).then(() => {
     daysEl.querySelector(`.quick-add[data-date="${date}"] input`)?.focus();
   });
 });
