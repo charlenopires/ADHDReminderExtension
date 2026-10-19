@@ -110,7 +110,7 @@ function renderQuote() {
     h(`
       <header class="quotes-head">
         <div class="day-title">
-          <span class="eyebrow">Estoicismo · foco</span>
+          <span class="eyebrow">Sabedoria · foco</span>
           <h2>Persista</h2>
           <span class="day-date mono">${String(i + 1).padStart(3, '0')} / ${QUOTES.length}</span>
         </div>
