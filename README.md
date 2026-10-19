@@ -1,47 +1,55 @@
 # Extreminder
 
-Extensão do Chrome (Manifest V3) que mostra, em cada nova aba, o **projeto em foco** e as tarefas de **hoje e dos próximos 2 dias**, com a **fase da lua** de cada dia. Tudo começa **oculto e cifrado**.
+A Chrome extension (Manifest V3) that shows your **project in focus** and your tasks for **today and the next 2 days** on every new tab, along with the **moon phase** for each day and a **quote** to keep you going. Everything starts **hidden and encrypted**.
 
-## Recursos
+## Features
 
-- **Nova aba**: projeto no topo, 3 colunas (Hoje, Amanhã, +2) com fase da lua e % de iluminação, contagem de pendentes e de alta prioridade. Cabe na tela sem rolagem e vira coluna única em telas estreitas.
-- **Privacidade**: o conteúdo começa oculto. O botão do olho pede o **código de acesso** e então revela projeto e tarefas. Clicar de novo oculta. A aba se tranca sozinha depois de 2 min em segundo plano.
-- **Virada de dia automática**: tarefa não concluída no seu dia passa para o dia seguinte e ganha um selo `↻ Nd` com quantos dias foi adiada. Tarefas concluídas ficam guardadas por 30 dias.
-- **Prioridades com escala de calor**: Alta (vermelho), Média (laranja), Baixa (azul frio).
-- **Drag and drop**: reordene dentro do dia ou arraste para outro dia (colunas na nova aba, abas de dia no popup). "Ordenar por prioridade" reorganiza o dia.
-- **Classificadores**: crie os seus (ex.: IFPI, Pessoal, Startup), com cor, e aplique às tarefas.
-- **Popup** (`Ctrl/Cmd+Shift+U`): projeto, adicionar tarefas com prioridade e classificador, editar com duplo clique, backup em JSON.
+- **New tab**: project at the top, 3 columns (Today, Tomorrow, +2) with moon phase and illumination %, plus counts of pending and high-priority tasks. Fits the screen without scrolling and collapses to a single column on narrow screens.
+- **Quotes**: a side column shows one randomly picked quote per tab, in a large font — 300 quotes about finishing what you start and persisting to the end, from Stoics and classics, tech entrepreneurs and Eastern thinkers. The shuffle button picks another one (never repeating the current). Quotes are not encrypted and stay visible even while the content is hidden.
+- **Privacy**: content starts hidden. The eye button asks for the **access code** and then reveals the project and tasks. Click again to hide. The tab locks itself after 2 minutes in the background.
+- **Automatic day rollover**: a task not completed on its day moves to the next day and gets a `↻ Nd` badge showing how many days it has been postponed. Completed tasks are kept for 30 days.
+- **Heat-scale priorities**: High (red), Medium (orange), Low (cool blue).
+- **Drag and drop**: reorder within a day or drag to another day (columns on the new tab, day tabs in the popup). "Sort by priority" reorganizes the day.
+- **Labels**: create your own (e.g. IFPI, Personal, Startup), with a color, and apply them to tasks.
+- **Popup** (`Ctrl/Cmd+Shift+U`): project, add tasks with priority and label, edit with double-click, JSON backup.
 
-## Segurança
+> The UI and quotes are in Brazilian Portuguese.
 
-- O código de acesso **não fica no código-fonte em texto puro**. Só existe um verificador PBKDF2-SHA256 (310k iterações, com salt).
-- Projeto, tarefas e classificadores ficam **cifrados com AES-GCM** em `chrome.storage.local`. A chave é derivada do código de acesso com outro salt.
-- O popup lembra o desbloqueio por 15 min de inatividade, só na memória do navegador (`chrome.storage.session`). A nova aba sempre começa trancada.
-- Os dados da versão antiga (IndexedDB e `tasksData`) são migrados para o cofre cifrado no primeiro desbloqueio e depois apagados.
-- Permissões mínimas: só `storage`.
+## Security
+
+- The access code is **not stored in plain text in the source code**. Only a PBKDF2-SHA256 verifier exists (310k iterations, salted).
+- Project, tasks and labels are **encrypted with AES-GCM** in `chrome.storage.local`. The key is derived from the access code with a different salt.
+- The popup remembers the unlock for 15 minutes of inactivity, in browser memory only (`chrome.storage.session`, restricted to trusted contexts). The new tab always starts locked.
+- Data from the old version (IndexedDB and `tasksData`) is migrated into the encrypted vault on first unlock and then deleted.
+- Minimal permissions: only `storage`.
 
 ## Design
 
-- Paleta dark em escala de 12 passos no estilo Radix Colors (slate como base, cyan/violet como acentos). Os tokens ficam em `styles/tokens.css`.
-- Tipografia: Geist e Geist Mono.
-- Ícones SVG inline (`lib/icons.js`). Os ícones da extensão são gerados a partir de `icons/icon.svg` e `icons/icon-small.svg`:
+- Dark palette on a 12-step scale in the style of Radix Colors (slate as the base, cyan/violet as accents). Tokens live in `styles/tokens.css`.
+- Typography: Geist and Geist Mono.
+- Inline SVG icons (`lib/icons.js`). The extension icons are generated from `icons/icon.svg` and `icons/icon-small.svg`:
 
 ```bash
 rsvg-convert -w 128 -h 128 icons/icon.svg -o icons/icon128.png
 ```
 
-## Instalação
+## Installation
 
-1. Abra `chrome://extensions` e ative o **Modo do desenvolvedor**.
-2. Clique em **Carregar sem compactação** e selecione esta pasta.
+1. Open `chrome://extensions` and turn on **Developer mode**.
+2. Click **Load unpacked** and select this folder.
 
-## Estrutura
+## Structure
 
 ```
 manifest.json      background.js
 newtab.html/js     popup.html/js
-lib/  crypto.js (código + AES-GCM) · store.js (cofre, virada de dia, ordem)
-      moon.js (fase da lua) · ui.js (componentes, DnD, diálogo) · actions.js · icons.js
+lib/  crypto.js (access code + AES-GCM) · store.js (vault, day rollover, ordering)
+      moon.js (moon phase) · quotes.js (quotes) · ui.js (components, DnD, dialog)
+      actions.js · icons.js
 styles/ tokens.css · app.css · newtab.css · popup.css
 icons/  icon.svg · icon-small.svg · PNGs 16/32/48/128
 ```
+
+## License
+
+See [LICENSE](LICENSE).
