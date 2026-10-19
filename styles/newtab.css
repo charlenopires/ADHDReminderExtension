@@ -240,77 +240,34 @@ body.is-locked .eye-btn {
   border-radius: 12px;
 }
 
-.quotes-list {
-  position: relative;
+.quote {
   flex: 1;
   min-height: 0;
-  margin: 0 -6px;
-  padding: 2px 6px 40vh;
-  list-style: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-5);
+  margin: 0;
+  padding: var(--space-4) var(--space-2);
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--gray-6) transparent;
-  mask-image: linear-gradient(transparent, #000 16px, #000 calc(100% - 48px), transparent);
-}
-
-.quote {
-  padding: var(--space-4) var(--space-3);
-  border-radius: var(--radius-md);
-  border-left: 2px solid transparent;
-  cursor: pointer;
-  opacity: 0.55;
-  transition:
-    opacity var(--dur) var(--ease),
-    background var(--dur) var(--ease),
-    border-color var(--dur) var(--ease);
-}
-
-.quote:hover {
-  opacity: 0.85;
-}
-
-.quote.is-active {
-  opacity: 1;
-  background: color-mix(in oklab, var(--violet-9) 8%, transparent);
-  border-left-color: var(--violet-9);
+  scrollbar-width: none;
+  animation: task-in 500ms var(--ease) both;
 }
 
 .quote blockquote {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: clamp(1.35rem, 0.7rem + 1.05vw, 1.9rem);
-  line-height: 1.18;
-  letter-spacing: -0.005em;
-  color: var(--gray-12);
-  text-wrap: pretty;
-}
-
-.quote.is-active blockquote {
   font-style: italic;
+  font-size: clamp(2.1rem, 1rem + 2.1vw, 3.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  color: var(--gray-12);
+  text-wrap: balance;
 }
 
-.quote cite {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-  margin-top: var(--space-2);
-  font-style: normal;
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-}
-
-.quote cite .mono {
-  font-size: var(--text-xs);
-  color: var(--text-faint);
-}
-
-.quote cite em {
-  font-family: var(--font-mono);
-  font-style: normal;
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+.quote figcaption {
+  font-size: clamp(0.95rem, 0.8rem + 0.3vw, 1.15rem);
+  font-weight: 500;
   color: var(--violet-11);
 }
 
@@ -518,7 +475,7 @@ body.is-locked .eye-btn {
   }
 
   .quotes {
-    height: 70vh;
+    min-height: 55vh;
   }
 
   .day-body {

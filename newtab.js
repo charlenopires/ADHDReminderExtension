@@ -4,7 +4,7 @@ import { icon, logo } from './lib/icons.js';
 import { moonPhase, moonSVG } from './lib/moon.js';
 import { Vault, dateKey, addDays, parseKey, tasksFor, addTask, moveTask } from './lib/store.js';
 import { taskHandlers } from './lib/actions.js';
-import { QUOTES, quoteIndexFor } from './lib/quotes.js';
+import { QUOTES } from './lib/quotes.js';
 import { $, esc, h, taskItem, bindTaskEvents, enableDnD, askAccessCode, weekdayLabel, dayMonthLabel } from './lib/ui.js';
 
 const AUTO_LOCK_MS = 2 * 60 * 1000; // aba em segundo plano por 2 min → tranca
@@ -97,51 +97,35 @@ function renderDays() {
 // Coluna de frases: não é cifrada, fica visível mesmo com o conteúdo oculto.
 const quotesEl = $('#quotes');
 
-function renderQuotes() {
-  const todayIdx = quoteIndexFor(parseKey(today));
+// Uma frase sorteada a cada aba aberta (o botão sorteia outra, sem repetir a atual).
+let quoteIdx = -1;
+
+function renderQuote() {
+  let i;
+  do i = Math.floor(Math.random() * QUOTES.length);
+  while (i === quoteIdx && QUOTES.length > 1);
+  quoteIdx = i;
+  const [text, author] = QUOTES[i];
   quotesEl.replaceChildren(
     h(`
       <header class="quotes-head">
         <div class="day-title">
           <span class="eyebrow">Estoicismo · foco</span>
           <h2>Persista</h2>
-          <span class="day-date mono">${QUOTES.length} frases</span>
+          <span class="day-date mono">${String(i + 1).padStart(3, '0')} / ${QUOTES.length}</span>
         </div>
-        <button class="eye-btn quotes-shuffle" type="button" title="Frase aleatória" aria-label="Frase aleatória">${icon('sparkle', 18)}</button>
+        <button class="eye-btn quotes-shuffle" type="button" title="Outra frase" aria-label="Outra frase">${icon('sparkle', 18)}</button>
       </header>`),
     h(`
-      <ol class="quotes-list">
-        ${QUOTES.map(
-          ([text, author], i) => `
-          <li class="quote${i === todayIdx ? ' is-today is-active' : ''}" data-i="${i}">
-            <blockquote>${esc(text)}</blockquote>
-            <cite><span class="mono">${String(i + 1).padStart(3, '0')}</span>${esc(author)}${i === todayIdx ? '<em>frase do dia</em>' : ''}</cite>
-          </li>`
-        ).join('')}
-      </ol>`)
+      <figure class="quote">
+        <blockquote>${esc(text)}</blockquote>
+        <figcaption>— ${esc(author)}</figcaption>
+      </figure>`)
   );
-  requestAnimationFrame(() => focusQuote(todayIdx, 'auto'));
-}
-
-function focusQuote(i, behavior = 'smooth') {
-  const list = quotesEl.querySelector('.quotes-list');
-  const item = list?.children[i];
-  if (!item) return;
-  list.querySelector('.is-active')?.classList.remove('is-active');
-  item.classList.add('is-active');
-  list.scrollTo({ top: item.offsetTop - 8, behavior });
 }
 
 quotesEl.addEventListener('click', (e) => {
-  if (e.target.closest('.quotes-shuffle')) return focusQuote(Math.floor(Math.random() * QUOTES.length));
-  const item = e.target.closest('.quote');
-  if (item) focusQuote(Number(item.dataset.i));
-});
-
-// A troca de layout (4 → 2 → 1 coluna) muda as alturas; mantém a frase ativa à vista.
-window.addEventListener('resize', () => {
-  const active = quotesEl.querySelector('.quote.is-active');
-  if (active) focusQuote(Number(active.dataset.i), 'auto');
+  if (e.target.closest('.quotes-shuffle')) renderQuote();
 });
 
 function render() {
@@ -201,7 +185,6 @@ function tick() {
   $('#today-label').textContent = now.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'long' }).replace('.', '');
   if (dateKey(now) !== today) {
     today = dateKey(now);
-    renderQuotes();
     if (vault) vault.load().then((s) => ((state = s), render()));
     else render();
   }
@@ -215,5 +198,5 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) tick();
 });
 
-renderQuotes();
+renderQuote();
 render();
