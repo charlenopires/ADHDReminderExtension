@@ -6,6 +6,7 @@ import { Vault, dateKey, addDays, parseKey, tasksFor, addTask, moveTask, TIME_RE
 import { taskHandlers } from './lib/actions.js';
 import { QUOTES } from './lib/quotes.js';
 import { CURRENCIES, getRates } from './lib/rates.js';
+import { daysFor } from './lib/days.js';
 import { $, esc, h, taskItem, bindTaskEvents, enableDnD, askAccessCode, weekdayLabel, dayMonthLabel } from './lib/ui.js';
 
 const AUTO_LOCK_MS = 2 * 60 * 1000; // aba em segundo plano por 2 min → tranca
@@ -121,8 +122,21 @@ function renderQuote() {
       <figure class="quote">
         <blockquote>${esc(text)}</blockquote>
         <figcaption>— ${esc(author)}</figcaption>
-      </figure>`)
+      </figure>`),
+    todayDates()
   );
+}
+
+// Datas comemorativas de hoje, logo abaixo da frase.
+function todayDates() {
+  const now = new Date();
+  const items = daysFor(now);
+  const label = now.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
+  return h(`
+    <section class="today-dates" aria-label="Datas comemorativas de hoje">
+      <span class="eyebrow">Hoje, ${esc(label)}, é</span>
+      <ul>${items.map((d) => `<li>${esc(d)}</li>`).join('')}</ul>
+    </section>`);
 }
 
 quotesEl.addEventListener('click', (e) => {
@@ -210,6 +224,7 @@ function tick() {
   $('#today-label').textContent = now.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'long' }).replace('.', '');
   if (dateKey(now) !== today) {
     today = dateKey(now);
+    quotesEl.querySelector('.today-dates')?.replaceWith(todayDates());
     if (vault) vault.load().then((s) => ((state = s), render()));
     else render();
   }

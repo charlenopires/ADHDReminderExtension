@@ -161,27 +161,6 @@ button {
   opacity: 1;
 }
 
-/* Horário: amarelo vibrante */
-.chip-time {
-  --time: #ffe600;
-  color: var(--time);
-  background: color-mix(in oklab, var(--time) 14%, transparent);
-  border-color: color-mix(in oklab, var(--time) 35%, transparent);
-  font-family: var(--font-mono);
-  font-weight: 600;
-  text-shadow: 0 0 10px color-mix(in oklab, var(--time) 45%, transparent);
-}
-
-.chip-time-input {
-  height: 22px;
-  border-color: var(--time);
-  outline: none;
-}
-
-.chip-time-input::-webkit-calendar-picker-indicator {
-  filter: invert(1) sepia(1) saturate(8) hue-rotate(5deg);
-}
-
 .chip-rolled {
   font-family: var(--font-mono);
   color: var(--heat-medium-2);
@@ -225,10 +204,10 @@ button {
 .task {
   position: relative;
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: start;
-  gap: var(--space-2);
-  padding: 10px 10px 10px 8px;
+  column-gap: var(--space-3);
+  padding: 12px 10px 12px 16px;
   border-radius: var(--radius-md);
   background:
     linear-gradient(90deg, color-mix(in oklab, var(--heat) 13%, transparent), transparent 55%),
@@ -273,14 +252,47 @@ button {
   border-color: color-mix(in oklab, var(--heat) 40%, var(--border));
 }
 
-.task-grip {
-  color: var(--gray-7);
-  cursor: grab;
-  padding-top: 3px;
+/* Horário: coluna própria, grande, amarelo vibrante */
+.task-time {
+  --time: #ffe600;
+  padding: 0 0 0 var(--space-3);
+  border: 0;
+  border-left: 1px solid var(--border-strong);
+  background: none;
+  color: var(--time);
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 22px;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 12px color-mix(in oklab, var(--time) 40%, transparent);
+  cursor: pointer;
 }
 
-.task:hover .task-grip {
+.task-time:disabled {
+  cursor: default;
+}
+
+.task-time.is-empty {
+  color: var(--gray-8);
+  text-shadow: none;
+}
+
+.task-time-input {
+  width: 92px;
+  height: 22px;
+  border-left-color: var(--time);
+  outline: none;
+  font-size: 0.95rem;
+}
+
+.task-time-input::-webkit-calendar-picker-indicator {
+  filter: invert(1) sepia(1) saturate(8) hue-rotate(5deg);
+}
+
+.task.is-done .task-time {
   color: var(--text-faint);
+  text-shadow: none;
 }
 
 .task-check {
@@ -289,6 +301,7 @@ button {
   width: 20px;
   height: 20px;
   margin-top: 1px;
+  cursor: pointer;
   border-radius: 6px;
   border: 1.5px solid color-mix(in oklab, var(--heat) 60%, var(--gray-7));
   color: transparent;
@@ -307,8 +320,10 @@ button {
 }
 
 .task-text {
-  font-size: var(--text-md);
-  font-weight: 450;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--text);
   overflow-wrap: anywhere;
   outline: none;
   border-radius: 4px;
@@ -327,15 +342,27 @@ button {
   gap: 4px;
 }
 
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: -3px 0;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.task:hover .task-actions,
+.task-actions:focus-within {
+  opacity: 1;
+}
+
+.task-actions .chip-empty {
+  opacity: 1;
+}
+
 .task-del {
   width: 28px;
   height: 28px;
-  opacity: 0;
-}
-
-.task:hover .task-del,
-.task-del:focus-visible {
-  opacity: 1;
 }
 
 .task-del:hover {
