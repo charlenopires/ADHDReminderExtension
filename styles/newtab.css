@@ -100,6 +100,48 @@ body {
   flex: none;
 }
 
+/* Cotações do dia */
+.rates {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.rate {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  line-height: 1.15;
+  min-width: 104px;
+}
+
+.rate .eyebrow b {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.rate-value {
+  font-size: var(--text-md);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.rate-pct {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.rate.is-up .rate-pct {
+  color: var(--green-9);
+}
+
+.rate.is-down .rate-pct {
+  color: var(--heat-high);
+}
+
 .legend {
   display: flex;
   gap: var(--space-3);
@@ -484,6 +526,19 @@ body.is-locked .eye-btn {
 
   .clock {
     display: none;
+  }
+
+  .top {
+    flex-wrap: wrap;
+  }
+
+  .top-right {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .rate {
+    min-width: 0;
   }
 }
 

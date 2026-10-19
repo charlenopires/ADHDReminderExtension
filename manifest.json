@@ -4,6 +4,7 @@
   "version": "2.0.0",
   "description": "Tarefas de hoje e dos próximos 2 dias em cada nova aba, com fase da lua, prioridades e conteúdo cifrado.",
   "permissions": ["storage"],
+  "host_permissions": ["https://economia.awesomeapi.com.br/*"],
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",

@@ -5,6 +5,7 @@ import { moonPhase, moonSVG } from './lib/moon.js';
 import { Vault, dateKey, addDays, parseKey, tasksFor, addTask, moveTask } from './lib/store.js';
 import { taskHandlers } from './lib/actions.js';
 import { QUOTES } from './lib/quotes.js';
+import { CURRENCIES, getRates } from './lib/rates.js';
 import { $, esc, h, taskItem, bindTaskEvents, enableDnD, askAccessCode, weekdayLabel, dayMonthLabel } from './lib/ui.js';
 
 const AUTO_LOCK_MS = 2 * 60 * 1000; // aba em segundo plano por 2 min → tranca
@@ -128,6 +129,28 @@ quotesEl.addEventListener('click', (e) => {
   if (e.target.closest('.quotes-shuffle')) renderQuote();
 });
 
+// Cotações do dia: públicas, não cifradas, visíveis mesmo com o conteúdo oculto.
+const ratesEl = $('#rates');
+const brl = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+async function renderRates() {
+  const data = await getRates();
+  const at = data ? new Date(data.at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+  ratesEl.title = data ? `Cotação de compra em R$ · atualizada às ${at}` : 'Cotações indisponíveis';
+  ratesEl.replaceChildren(
+    ...CURRENCIES.map(({ code, label, symbol }) => {
+      const r = data?.rates[code];
+      const dir = !r || r.pct === 0 ? '' : r.pct > 0 ? ' is-up' : ' is-down';
+      return h(`
+        <div class="rate${dir}" aria-label="${esc(label)}">
+          <span class="eyebrow">${esc(label)} <b>${esc(symbol)}</b></span>
+          <span class="rate-value mono">${r ? `R$ ${brl(r.bid)}` : '—'}</span>
+          ${r ? `<span class="rate-pct mono">${r.pct > 0 ? '+' : ''}${brl(r.pct)}%</span>` : ''}
+        </div>`);
+    })
+  );
+}
+
 function render() {
   renderHeader();
   renderDays();
@@ -195,8 +218,9 @@ setInterval(tick, 5000);
 document.addEventListener('visibilitychange', () => {
   clearTimeout(hiddenTimer);
   if (document.hidden && state) hiddenTimer = setTimeout(lock, AUTO_LOCK_MS);
-  if (!document.hidden) tick();
+  if (!document.hidden) tick(), renderRates();
 });
 
 renderQuote();
+renderRates();
 render();
